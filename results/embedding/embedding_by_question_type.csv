@@ -1,0 +1,11 @@
+experiment_id,embedding_model,embedding_type,question_type,count,hit_rate_at_1,hit_rate_at_3,mrr
+openai_text_embedding_3_small,text-embedding-3-small,api,contextual,6,1.0,1.0,1.0
+openai_text_embedding_3_small,text-embedding-3-small,api,discrimination,5,0.6,0.8,0.7
+openai_text_embedding_3_small,text-embedding-3-small,api,multi-document,6,0.8333333333333334,1.0,0.9166666666666666
+openai_text_embedding_3_small,text-embedding-3-small,api,single-conceptual,5,0.6,0.8,0.725
+openai_text_embedding_3_small,text-embedding-3-small,api,single-troubleshooting,14,0.7142857142857143,0.9285714285714286,0.8316326530612245
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,contextual,6,1.0,1.0,1.0
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,discrimination,5,0.4,0.6,0.513888888888889
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,multi-document,6,1.0,1.0,1.0
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,single-conceptual,5,0.6,0.8,0.7
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,single-troubleshooting,14,0.7857142857142857,0.8571428571428571,0.8472222222222222

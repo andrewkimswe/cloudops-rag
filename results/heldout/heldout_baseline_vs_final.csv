@@ -1,0 +1,5 @@
+metric,baseline,baseline_rate,final,final_rate
+configured_cutoff_hit,8/8,1.0,8/8,1.0
+hit_at_1,6/8,0.75,7/8,0.875
+mrr,0.8333333333333334,0.8333333333333334,0.9375,0.9375
+multi_all_hit_configured_cutoff,0/3,0.0,0/3,0.0

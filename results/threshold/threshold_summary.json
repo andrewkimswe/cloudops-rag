@@ -1,0 +1,88 @@
+{
+  "phase": "Phase 12",
+  "held_out_test_used": false,
+  "dataset": "data/evaluation/evaluation_dev.csv",
+  "frozen_retrieval_configuration": {
+    "chunk_size": 1024,
+    "chunk_overlap": 128,
+    "chunk_unit": "character",
+    "embedding_model": "text-embedding-3-small",
+    "vector_db": "Chroma",
+    "retrieval_top_k": 5,
+    "collection": "cloudops_rag_v1_embedding_openai_text_embedding_3_small"
+  },
+  "score_semantics": {
+    "returned_field": "distances",
+    "metric": "l2",
+    "direction": "smaller_is_more_similar",
+    "accept_rule": "top_1_l2_distance <= selected_threshold"
+  },
+  "threshold_signal": "top_1_retrieved_chunk_l2_distance",
+  "selected_threshold": 1.042478,
+  "selected_confusion_matrix": {
+    "threshold": 1.042478,
+    "threshold_rule": "accept_if_top_1_l2_distance_lte_threshold",
+    "true_accept": 36,
+    "false_reject": 0,
+    "true_reject": 4,
+    "false_accept": 0,
+    "in_scope_total": 36,
+    "out_of_scope_total": 4,
+    "in_scope_acceptance_rate": 1.0,
+    "out_of_scope_rejection_rate": 1.0,
+    "false_reject_rate": 0.0,
+    "false_accept_rate": 0.0,
+    "accept_precision": 1.0,
+    "reject_precision": 1.0
+  },
+  "smoke_test_run": true,
+  "smoke_test": {
+    "selected_threshold": 1.042478,
+    "llm_total_calls": 2,
+    "cases": [
+      {
+        "case": "in_scope",
+        "id": "eval_001",
+        "fallback": false,
+        "llm_called": true,
+        "llm_calls_delta": 1,
+        "retrieval_distance": 0.6425888538360596,
+        "distance_threshold": 1.042478,
+        "source_count": 3,
+        "source_doc_ids": [
+          "k8s_debug_running_pod",
+          "k8s_debug_pods",
+          "k8s_liveness_readiness_startup_probes"
+        ],
+        "answer_preview": "To troubleshoot a Kubernetes Pod that is stuck in the Pending state, the first step you should take is to inspect the Pod's details and events using the command:\n\n```\nkubectl describe pod ${POD_NAME}\n```\n\nThis command will provide informati"
+      },
+      {
+        "case": "out_of_scope",
+        "id": "eval_039",
+        "fallback": true,
+        "llm_called": false,
+        "llm_calls_delta": 0,
+        "retrieval_distance": 1.507979393005371,
+        "distance_threshold": 1.042478,
+        "source_count": 0,
+        "source_doc_ids": [],
+        "answer_preview": "I couldn't find sufficient support for this question in the indexed documents."
+      },
+      {
+        "case": "borderline",
+        "id": "eval_028",
+        "fallback": false,
+        "llm_called": true,
+        "llm_calls_delta": 1,
+        "retrieval_distance": 1.0349994897842407,
+        "distance_threshold": 1.042478,
+        "source_count": 2,
+        "source_doc_ids": [
+          "aws_alb_monitoring",
+          "aws_alb_troubleshooting"
+        ],
+        "answer_preview": "You should start with ALB monitoring when you need raw evidence about request patterns before changing target settings. The official documentation indicates that you can use access logs and connection logs to analyze traffic patterns and ga"
+      }
+    ]
+  }
+}

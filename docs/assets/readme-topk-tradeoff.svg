@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="70" y="32" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Top-k Trade-off on Development Set</text>
+<text x="70" y="56" font-family="Arial, sans-serif" font-size="13" fill="#4b5563">k=5 did not improve overall Hit over k=3, but surfaced both docs for 2/6 multi-document questions.</text>
+<line x1="70" x2="790" y1="335.0" y2="335.0" stroke="#e5e7eb"/>
+<text x="60" y="339.0" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">0</text>
+<line x1="70" x2="790" y1="268.8" y2="268.8" stroke="#e5e7eb"/>
+<text x="60" y="272.8" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">9</text>
+<line x1="70" x2="790" y1="202.5" y2="202.5" stroke="#e5e7eb"/>
+<text x="60" y="206.5" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">18</text>
+<line x1="70" x2="790" y1="136.2" y2="136.2" stroke="#e5e7eb"/>
+<text x="60" y="140.2" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">27</text>
+<line x1="70" x2="790" y1="70.0" y2="70.0" stroke="#e5e7eb"/>
+<text x="60" y="74.0" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">36</text>
+<line x1="70" x2="70" y1="70" y2="335" stroke="#9ca3af"/>
+<line x1="70" x2="790" y1="335" y2="335" stroke="#9ca3af"/>
+<text x="18" y="202.5" transform="rotate(-90 18 202.5)" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#374151">Questions out of 36 or scaled tokens</text>
+<rect x="158.0" y="92.1" width="56.0" height="242.9" fill="#0f766e" rx="3"/>
+<text x="186.0" y="86.1" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">33</text>
+<rect x="222.0" y="335.0" width="56.0" height="0.0" fill="#dc2626" rx="3"/>
+<text x="250.0" y="329.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">0</text>
+<rect x="286.0" y="281.1" width="56.0" height="53.9" fill="#6b7280" rx="3"/>
+<text x="314.0" y="275.1" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">7.32</text>
+<text x="250.0" y="359" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#111827">k=3</text>
+<rect x="518.0" y="92.1" width="56.0" height="242.9" fill="#0f766e" rx="3"/>
+<text x="546.0" y="86.1" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">33</text>
+<rect x="582.0" y="320.3" width="56.0" height="14.7" fill="#dc2626" rx="3"/>
+<text x="610.0" y="314.3" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">2</text>
+<rect x="646.0" y="244.0" width="56.0" height="91.0" fill="#6b7280" rx="3"/>
+<text x="674.0" y="238.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">12.36</text>
+<text x="610.0" y="359" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#111827">k=5</text>
+<rect x="70" y="382" width="12" height="12" fill="#0f766e" rx="2"/>
+<text x="88" y="392" font-family="Arial, sans-serif" font-size="12" fill="#374151">Overall hit count</text>
+<rect x="250" y="382" width="12" height="12" fill="#dc2626" rx="2"/>
+<text x="268" y="392" font-family="Arial, sans-serif" font-size="12" fill="#374151">Multi All-Hit count</text>
+<rect x="430" y="382" width="12" height="12" fill="#6b7280" rx="2"/>
+<text x="448" y="392" font-family="Arial, sans-serif" font-size="12" fill="#374151">Approx tokens / 100</text>
+</svg>

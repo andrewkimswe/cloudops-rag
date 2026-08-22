@@ -1,0 +1,5 @@
+experiment_id,embedding_model,embedding_type,provider,count,hit_rate_at_1,hit_rate_at_3,mrr
+openai_text_embedding_3_small,text-embedding-3-small,api,kubernetes,19,0.6842105263157895,0.8421052631578947,0.7772556390977443
+openai_text_embedding_3_small,text-embedding-3-small,api,aws,17,0.8235294117647058,1.0,0.9117647058823529
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,kubernetes,19,0.7894736842105263,0.8421052631578947,0.8282163742690059
+local_all_minilm_l6_v2,sentence-transformers/all-MiniLM-L6-v2,local,aws,17,0.7647058823529411,0.8823529411764706,0.8349673202614379

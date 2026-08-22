@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="70" y="32" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#111827">Chunking Trade-off on Development Set</text>
+<text x="70" y="56" font-family="Arial, sans-serif" font-size="13" fill="#4b5563">1024/128 improved Top-3 coverage by one question, while Hit@1 and MRR decreased.</text>
+<line x1="70" x2="790" y1="335.0" y2="335.0" stroke="#e5e7eb"/>
+<text x="60" y="339.0" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">0</text>
+<line x1="70" x2="790" y1="268.8" y2="268.8" stroke="#e5e7eb"/>
+<text x="60" y="272.8" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">9</text>
+<line x1="70" x2="790" y1="202.5" y2="202.5" stroke="#e5e7eb"/>
+<text x="60" y="206.5" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">18</text>
+<line x1="70" x2="790" y1="136.2" y2="136.2" stroke="#e5e7eb"/>
+<text x="60" y="140.2" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">27</text>
+<line x1="70" x2="790" y1="70.0" y2="70.0" stroke="#e5e7eb"/>
+<text x="60" y="74.0" text-anchor="end" font-family="Arial, sans-serif" font-size="11" fill="#6b7280">36</text>
+<line x1="70" x2="70" y1="70" y2="335" stroke="#9ca3af"/>
+<line x1="70" x2="790" y1="335" y2="335" stroke="#9ca3af"/>
+<text x="18" y="202.5" transform="rotate(-90 18 202.5)" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#374151">Questions out of 36</text>
+<rect x="190.0" y="121.5" width="56.0" height="213.5" fill="#2563eb" rx="3"/>
+<text x="218.0" y="115.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">29</text>
+<rect x="254.0" y="99.4" width="56.0" height="235.6" fill="#f97316" rx="3"/>
+<text x="282.0" y="93.4" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">32</text>
+<text x="250.0" y="359" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#111827">512/0 baseline</text>
+<rect x="550.0" y="136.2" width="56.0" height="198.8" fill="#2563eb" rx="3"/>
+<text x="578.0" y="130.2" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">27</text>
+<rect x="614.0" y="92.1" width="56.0" height="242.9" fill="#f97316" rx="3"/>
+<text x="642.0" y="86.1" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#111827">33</text>
+<text x="610.0" y="359" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#111827">1024/128 selected</text>
+<rect x="70" y="382" width="12" height="12" fill="#2563eb" rx="2"/>
+<text x="88" y="392" font-family="Arial, sans-serif" font-size="12" fill="#374151">Hit@1 count</text>
+<rect x="250" y="382" width="12" height="12" fill="#f97316" rx="2"/>
+<text x="268" y="392" font-family="Arial, sans-serif" font-size="12" fill="#374151">Hit@3 count</text>
+</svg>

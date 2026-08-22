@@ -1,0 +1,49 @@
+{
+  "selected_threshold": 1.042478,
+  "llm_total_calls": 2,
+  "cases": [
+    {
+      "case": "in_scope",
+      "id": "eval_001",
+      "fallback": false,
+      "llm_called": true,
+      "llm_calls_delta": 1,
+      "retrieval_distance": 0.6425888538360596,
+      "distance_threshold": 1.042478,
+      "source_count": 3,
+      "source_doc_ids": [
+        "k8s_debug_running_pod",
+        "k8s_debug_pods",
+        "k8s_liveness_readiness_startup_probes"
+      ],
+      "answer_preview": "To troubleshoot a Kubernetes Pod that is stuck in the Pending state, the first step you should take is to inspect the Pod's details and events using the command:\n\n```\nkubectl describe pod ${POD_NAME}\n```\n\nThis command will provide informati"
+    },
+    {
+      "case": "out_of_scope",
+      "id": "eval_039",
+      "fallback": true,
+      "llm_called": false,
+      "llm_calls_delta": 0,
+      "retrieval_distance": 1.507979393005371,
+      "distance_threshold": 1.042478,
+      "source_count": 0,
+      "source_doc_ids": [],
+      "answer_preview": "I couldn't find sufficient support for this question in the indexed documents."
+    },
+    {
+      "case": "borderline",
+      "id": "eval_028",
+      "fallback": false,
+      "llm_called": true,
+      "llm_calls_delta": 1,
+      "retrieval_distance": 1.0349994897842407,
+      "distance_threshold": 1.042478,
+      "source_count": 2,
+      "source_doc_ids": [
+        "aws_alb_monitoring",
+        "aws_alb_troubleshooting"
+      ],
+      "answer_preview": "You should start with ALB monitoring when you need raw evidence about request patterns before changing target settings. The official documentation indicates that you can use access logs and connection logs to analyze traffic patterns and ga"
+    }
+  ]
+}

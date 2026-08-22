@@ -1,0 +1,118 @@
+{
+  "baseline_config": {
+    "chunk_size": 512,
+    "chunk_overlap": 0,
+    "chunk_unit": "character",
+    "embedding_model": "text-embedding-3-small",
+    "vector_db": "Chroma",
+    "chroma_collection": "cloudops_rag_v1",
+    "retrieval_top_k": 3,
+    "evaluation_depth": 10,
+    "evaluation_dataset": "data/evaluation/evaluation_dev.csv",
+    "held_out_test_used": false
+  },
+  "counts": {
+    "dev_total": 40,
+    "in_scope": 36,
+    "out_of_scope": 4,
+    "single": 30,
+    "multi": 6,
+    "question_type": {
+      "single-troubleshooting": 14,
+      "single-conceptual": 5,
+      "contextual": 6,
+      "discrimination": 5,
+      "multi-document": 6,
+      "out-of-scope": 4
+    },
+    "provider": {
+      "kubernetes": 19,
+      "aws": 17,
+      "out_of_scope": 4
+    }
+  },
+  "overall_in_scope": {
+    "count": 36,
+    "hit_rate_at_1": 0.8055555555555556,
+    "hit_rate_at_3": 0.8888888888888888,
+    "mrr": 0.8650793650793651
+  },
+  "single_document": {
+    "count": 30,
+    "hit_rate_at_1": 0.8,
+    "hit_rate_at_3": 0.8666666666666667,
+    "mrr": 0.8547619047619047
+  },
+  "multi_document": {
+    "count": 6,
+    "any_hit_rate_at_1": 0.8333333333333334,
+    "any_hit_rate_at_3": 1.0,
+    "all_hit_rate_at_3": 0.0,
+    "mrr": 0.9166666666666666
+  },
+  "by_question_type": [
+    {
+      "question_type": "contextual",
+      "count": 6,
+      "hit_rate_at_1": 1.0,
+      "hit_rate_at_3": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "question_type": "discrimination",
+      "count": 5,
+      "hit_rate_at_1": 0.4,
+      "hit_rate_at_3": 0.8,
+      "mrr": 0.6
+    },
+    {
+      "question_type": "multi-document",
+      "count": 6,
+      "hit_rate_at_1": 0.8333333333333334,
+      "hit_rate_at_3": 1.0,
+      "mrr": 0.9166666666666666
+    },
+    {
+      "question_type": "single-conceptual",
+      "count": 5,
+      "hit_rate_at_1": 0.6,
+      "hit_rate_at_3": 0.6,
+      "mrr": 0.6785714285714286
+    },
+    {
+      "question_type": "single-troubleshooting",
+      "count": 14,
+      "hit_rate_at_1": 0.9285714285714286,
+      "hit_rate_at_3": 0.9285714285714286,
+      "mrr": 0.9464285714285714
+    }
+  ],
+  "by_provider": [
+    {
+      "provider": "kubernetes",
+      "count": 19,
+      "hit_rate_at_1": 0.8421052631578947,
+      "hit_rate_at_3": 0.8421052631578947,
+      "mrr": 0.868421052631579
+    },
+    {
+      "provider": "aws",
+      "count": 17,
+      "hit_rate_at_1": 0.7647058823529411,
+      "hit_rate_at_3": 0.9411764705882353,
+      "mrr": 0.861344537815126
+    }
+  ],
+  "latency": {
+    "mean_ms": 139.4107,
+    "median_ms": 123.551,
+    "p95_ms": 150.933
+  },
+  "out_of_scope": {
+    "count": 4,
+    "top_distance_mean": 1.2392285764217377,
+    "top_distance_median": 1.1977661848068237,
+    "top_distance_min": 1.0499556064605713,
+    "top_distance_max": 1.511426329612732
+  }
+}

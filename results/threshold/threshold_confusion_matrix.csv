@@ -1,0 +1,2 @@
+selected_threshold,true_accept,false_reject,true_reject,false_accept,in_scope_acceptance_rate,out_of_scope_rejection_rate,false_reject_rate,false_accept_rate
+1.042478,36,0,4,0,1.0,1.0,0.0,0.0

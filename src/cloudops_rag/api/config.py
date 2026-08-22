@@ -1,0 +1,18 @@
+"""Frozen retrieval and runtime API configuration."""
+
+from __future__ import annotations
+
+FROZEN_CHUNK_SIZE = 1024
+FROZEN_CHUNK_OVERLAP = 128
+FROZEN_CHUNK_UNIT = "character"
+FROZEN_EMBEDDING_MODEL = "text-embedding-3-small"
+FROZEN_LLM_MODEL = "gpt-4o-mini"
+FROZEN_VECTOR_DB = "Chroma"
+FROZEN_RETRIEVAL_TOP_K = 5
+FROZEN_TOP_1_L2_DISTANCE_THRESHOLD = 1.042478
+FROZEN_EVALUATION_CHROMA_COLLECTION = "cloudops_rag_v1_embedding_openai_text_embedding_3_small"
+RUNTIME_CHROMA_COLLECTION = "cloudops_rag_runtime_openai_text_embedding_3_small"
+FROZEN_CHROMA_COLLECTION = RUNTIME_CHROMA_COLLECTION
+
+DEFAULT_OPENAI_EMBEDDING_TIMEOUT_SECONDS = 30.0
+DEFAULT_OPENAI_LLM_TIMEOUT_SECONDS = 45.0

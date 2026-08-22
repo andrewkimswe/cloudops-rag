@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloudops-troubleshooting-rag-assistant"
+version = "0.1.0"
+description = "Backend-oriented RAG assistant for AWS and Kubernetes troubleshooting documents."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+authors = [
+  { name = "Jiwon Kim" }
+]
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn[standard]>=0.30,<1.0",
+  "langchain>=0.3,<2.0",
+  "langchain-community>=0.3,<2.0",
+  "langchain-openai>=0.2,<2.0",
+  "chromadb>=1.0,<2.0",
+  "openai>=1.50,<4.0",
+  "pandas>=2.2,<3.0",
+  "numpy>=1.26,<3.0",
+  "pydantic-settings>=2.4,<3.0",
+  "beautifulsoup4>=4.12,<5.0",
+  "certifi>=2024.8.30"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9.0",
+  "httpx>=0.27,<1.0"
+]
+local = [
+  "sentence-transformers>=3.0,<7.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

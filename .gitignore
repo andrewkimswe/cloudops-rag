@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+.venv*/
+venv/
+env/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.*
+secrets.*
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Local generated data and indexes
+data/raw/**
+data/processed/**
+data/runtime/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+indexes/
+chroma/
+.chroma/
+
+# Experiment outputs
+experiments/results/**
+!experiments/results/.gitkeep
+
+# Scratch and Codex deliverables outside the project source
+work/
+outputs/

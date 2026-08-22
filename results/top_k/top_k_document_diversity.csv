@@ -1,0 +1,5 @@
+experiment_id,cutoff_k,avg_unique_doc_count,avg_duplicate_chunk_count,avg_duplicate_ratio,avg_max_same_doc_occupancy,avg_max_same_doc_occupancy_ratio,max_unique_doc_count,max_duplicate_chunk_count,max_duplicate_ratio,max_max_same_doc_occupancy,max_max_same_doc_occupancy_ratio
+top_k_openai_1024_128,1,1.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,1.0,1.0
+top_k_openai_1024_128,3,1.55,1.45,0.4833333333333333,2.45,0.8166666666666667,3.0,2.0,0.6666666666666666,3.0,1.0
+top_k_openai_1024_128,5,1.975,3.025,0.605,3.775,0.755,5.0,4.0,0.8,5.0,1.0
+top_k_openai_1024_128,10,2.6,7.4,0.74,7.375,0.7375,6.0,9.0,0.9,10.0,1.0

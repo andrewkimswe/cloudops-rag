@@ -1,0 +1,4 @@
+document_id,source_url,processed_chars,chunk_count,fetch_ms,parse_ms,chunk_ms,embedding_ms,index_ms,total_ms,status,duplicate
+registered_89c93ad58ae8,https://kubernetes.io/docs/tasks/debug/debug-cluster/,20083,23,1840.41,111.44,0.03,2296.65,51.61,4300.14,completed,False
+registered_051a680a02dd,https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/,13359,15,1920.97,99.87,0.03,473.72,44.12,2538.71,completed,False
+registered_d905a95144a4,https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html,54536,61,369.2,48.75,0.09,333.26,70.19,821.49,completed,False

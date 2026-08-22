@@ -1,0 +1,6 @@
+question_type,count,hit_rate_at_1,hit_rate_at_3,mrr
+contextual,6,1.0,1.0,1.0
+discrimination,5,0.4,0.8,0.6
+multi-document,6,0.8333333333333334,1.0,0.9166666666666666
+single-conceptual,5,0.6,0.6,0.6785714285714286
+single-troubleshooting,14,0.9285714285714286,0.9285714285714286,0.9464285714285714
