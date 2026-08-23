@@ -48,7 +48,7 @@ AWS와 Kubernetes 공식 troubleshooting 문서를 기반으로 만든 evaluatio
 
 ## 9. Interview Answer: "성능이 좋은가요?"
 
-잘 되는 부분과 약한 부분을 분리해서 봐야 합니다. Held-out in-scope 8문항에서는 expected document가 Top-3 안에 8/8로 들어왔고, single-document 질문도 5/5가 모든 cutoff에서 성공했습니다. 하지만 multi-document 질문은 Held-out All-Hit@5가 0/3이라 필요한 모든 evidence를 함께 가져오는 데 약했습니다. Answer evaluation에서도 faithfulness는 높았지만 completeness는 낮았기 때문에, 이 프로젝트는 높은 점수만 주장하기보다 어디가 강하고 어디가 약한지 측정한 프로젝트라고 설명하는 것이 맞습니다.
+잘 되는 부분과 약한 부분을 분리해서 봐야 합니다. Held-out in-scope 8문항에서는 expected document가 Top-3 안에 8/8로 들어왔고, single-document 질문도 5/5가 모든 cutoff에서 성공했습니다. 하지만 multi-document 질문은 Held-out All-Hit@5가 0/3이라 필요한 모든 evidence를 함께 가져오는 데 약했습니다. Answer evaluation에서도 retrieval coverage와 answer correctness가 자동으로 같이 가지는 않았고, Human Review에서는 retrieval 실패뿐 아니라 근거가 있어도 핵심 포인트를 충분히 사용하지 못한 generation-side failure도 관찰됐습니다. 그래서 이 프로젝트는 높은 점수만 주장하기보다 어디가 강하고 어디가 약한지 측정한 프로젝트라고 설명하는 것이 맞습니다.
 
 ## 10. Interview Answer: "Hallucination은 어떻게 막았나요?"
 

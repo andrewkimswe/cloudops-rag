@@ -42,7 +42,7 @@ Post-hoc per-document cap=2 실험은 Frozen Configuration에 포함하지 않�
 | Dev threshold/fallback | 36/36 in-scope accepted, 4/4 OOS rejected |
 | Held-out threshold/fallback | 8/8 in-scope accepted, 2/2 OOS rejected |
 | Answer diagnostic | 14 questions: 11 generated answers, 3 OOS fallback |
-| Human answer means | Correctness 1.3636/2, Completeness 1.1818/2, Faithfulness 1.9091/2, Source Support 1.6364/2 |
+| Human answer scores | Correctness 15/22 (1.36/2), Completeness 13/22 (1.18/2), Faithfulness 21/22 (1.91/2), Source Support 18/22 (1.64/2) |
 | LLM Judge vs Human | 44개 score assignment 중 39/44 exact agreement, 44/44 within-1 |
 
 Frozen configuration은 held-out의 8개 in-scope 질문에서 모두 expected document를 Top-3 안에 포함했습니다. 다만 Held-out Test는 10문항뿐이며, 이 결과는 넓은 benchmark가 아니라 작은 검증 snapshot으로 해석해야 합니다.
@@ -161,13 +161,15 @@ Answer Quality Evaluation은 retrieval과 별도의 diagnostic layer로 수행�
 | Diagnostic questions | 14 |
 | Generated answers | 11 |
 | OOS fallback | 3 |
-| Correctness | 1.3636 / 2 |
-| Completeness | 1.1818 / 2 |
-| Faithfulness | 1.9091 / 2 |
-| Source Support | 1.6364 / 2 |
+| Correctness | 15/22 (1.36 / 2) |
+| Completeness | 13/22 (1.18 / 2) |
+| Faithfulness | 21/22 (1.91 / 2) |
+| Source Support | 18/22 (1.64 / 2) |
 | LLM Judge vs Human | 44개 score assignment 중 39/44 exact agreement, 44/44 within-1 |
 
 이 수치는 answer accuracy가 아닙니다. LLM Judge와 Human Review가 4개 평가 항목의 44개 score assignment 중 39/44에서 정확히 일치하고 44/44가 within-1이었다는 의미입니다.
+
+낮은 Correctness는 Retrieval 실패만으로 설명되지 않았습니다. Human Review에서는 11개 generated answer 중 generation-side failure 4건, combined retrieval/generation failure 2건, retrieval failure 1건, no-material-failure 4건이 관찰되었습니다. 관련 근거가 있었지만 핵심 비교나 필수 진단 포인트를 답변에 충분히 반영하지 못한 사례와, 불완전한 Retrieval context가 최종 답변까지 전파된 사례가 함께 있었습니다.
 
 대표 failure인 `eval_027`에서는 ConfigMap 질문에 대해 Secrets 중심 context가 retrieval되었습니다. Generation은 retrieved context에는 충실했지만, Human Evaluation은 Correctness = 0, Completeness = 0, Faithfulness = 2, Source Support = 0으로 판정했습니다.
 
@@ -368,8 +370,9 @@ docker run --rm \
 6. Metadata-aware retrieval.
 7. Retryable external failure에 대한 bounded retry/backoff.
 8. 더 큰 answer-quality evaluation.
-9. Token-based, section-aware, semantic chunking 실험.
-10. Docker image size 최적화.
+9. Retrieval context를 고정하고 prompt 또는 generation model 설정만 바꾸는 controlled generation experiment.
+10. Token-based, section-aware, semantic chunking 실험.
+11. Docker image size 최적화.
 
 ## Detailed Documentation
 

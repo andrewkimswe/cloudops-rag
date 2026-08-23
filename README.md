@@ -42,7 +42,7 @@ Retrieval evaluation measures whether expected source documents were retrieved. 
 | Dev threshold/fallback | 36/36 in-scope accepted, 4/4 out-of-scope rejected |
 | Held-out threshold/fallback | 8/8 in-scope accepted, 2/2 out-of-scope rejected |
 | Answer diagnostic | 14 questions: 11 generated answers, 3 fallback cases |
-| Human answer means | Correctness 1.36/2, Completeness 1.18/2, Faithfulness 1.91/2, Source Support 1.64/2 |
+| Human answer scores | Correctness 15/22 (1.36/2), Completeness 13/22 (1.18/2), Faithfulness 21/22 (1.91/2), Source Support 18/22 (1.64/2) |
 | Judge-human agreement | 39/44 exact, 44/44 within one point |
 
 On the 8 in-scope held-out questions, the frozen configuration retrieved the expected document within Top-3 for 8/8 questions. The held-out set is intentionally small, so this should be read as a validation snapshot, not a broad benchmark.
@@ -156,14 +156,16 @@ The diagnostic answer evaluation used 14 questions:
 - Human verification for all 11 generated answers.
 - LLM-as-a-Judge agreement checked against human scores.
 
-Human mean scores over 11 generated answers:
+Human scores over 11 generated answers:
 
-| Dimension | Mean |
+| Dimension | Score |
 |---|---:|
-| Correctness | 1.36 / 2 |
-| Completeness | 1.18 / 2 |
-| Faithfulness | 1.91 / 2 |
-| Source Support | 1.64 / 2 |
+| Correctness | 15/22 (1.36 / 2) |
+| Completeness | 13/22 (1.18 / 2) |
+| Faithfulness | 21/22 (1.91 / 2) |
+| Source Support | 18/22 (1.64 / 2) |
+
+The diagnostic results suggest that lower answer correctness was not caused by retrieval failures alone. Human review classified the 11 generated answers as 4 generation-side failures, 2 combined retrieval/generation failures, 1 retrieval failure, and 4 no-material-failure cases. Several reviewed cases had relevant evidence available but the answer omitted or underused a required comparison, diagnostic step, or key point; other cases propagated incomplete or incorrect retrieval context into the final answer.
 
 The most important lesson was that faithfulness is not the same as correctness. In `eval_027`, the system retrieved Secrets-focused context for a ConfigMap question. The answer stayed grounded in the retrieved context, but the retrieved context did not answer the actual question well, so correctness and source support were poor.
 
@@ -409,8 +411,9 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 6. Improve multi-document evidence retrieval.
 7. Add bounded retry/backoff for retryable external failures.
 8. Expand answer-quality evaluation beyond the current diagnostic subset.
-9. Explore token-based, section-aware, or semantic chunking.
-10. Reduce Docker image size.
+9. Run controlled generation experiments that hold retrieval context fixed while varying prompt or generation model configuration.
+10. Explore token-based, section-aware, or semantic chunking.
+11. Reduce Docker image size.
 
 ## Detailed Documentation
 
