@@ -1,0 +1,11 @@
+variant,question_type,count,hit_at_1_count,hit_at_1,hit_at_3_count,hit_at_3,hit_at_5_count,hit_at_5,mrr
+baseline,contextual,6,6,1.0,6,1.0,6,1.0,1.0
+baseline,discrimination,5,3,0.6,4,0.8,4,0.8,0.7
+baseline,multi-document,6,5,0.8333333333333334,6,1.0,6,1.0,0.9166666666666666
+baseline,single-conceptual,5,3,0.6,4,0.8,4,0.8,0.7
+baseline,single-troubleshooting,14,10,0.7142857142857143,13,0.9285714285714286,13,0.9285714285714286,0.8214285714285714
+cap2,contextual,6,6,1.0,6,1.0,6,1.0,1.0
+cap2,discrimination,5,3,0.6,4,0.8,4,0.8,0.7
+cap2,multi-document,6,5,0.8333333333333334,6,1.0,6,1.0,0.9166666666666666
+cap2,single-conceptual,5,3,0.6,5,1.0,5,1.0,0.7666666666666667
+cap2,single-troubleshooting,14,10,0.7142857142857143,13,0.9285714285714286,13,0.9285714285714286,0.8214285714285714

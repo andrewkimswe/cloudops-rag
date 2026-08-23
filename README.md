@@ -195,6 +195,20 @@ The trade-off is larger context and more duplicate chunks. At k=5, the average u
 
 ![Top-k trade-off](docs/assets/readme-topk-tradeoff.svg)
 
+### Retrieval Diversification
+
+After observing repeated duplicate-chunk occupancy in multi-document queries, a post-hoc Development-set experiment applied a maximum of two chunks per document while preserving dense similarity order. This experiment was conducted after the original held-out evaluation, so the existing held-out set was not reused to validate the diversified retriever, and cap=2 was not promoted to the frozen configuration.
+
+| Dev metric | Baseline | cap=2 candidate |
+|---|---:|---:|
+| Multi-document All-Hit@5 | 2/6 | 4/6 |
+| Average unique docs | 1.975 | 2.95 |
+| Duplicate ratio | 0.605 | 0.365 |
+| Max same-document occupancy | 5 | 2 |
+| Single-document Hit@5 | 27/30 | 28/30 |
+
+This supports the duplicate-occupancy hypothesis as a partial explanation: when a relevant document is present in the candidate ranking but suppressed by repeated chunks from another document, a document cap can help. It does not solve cases where the relevant document is absent from the raw candidate pool, as seen in `eval_027`; `eval_021` and `eval_046` also remained unresolved.
+
 ## Threshold and Fallback
 
 Chroma returned distances for this collection. Lower L2 distance means more similar.
@@ -384,8 +398,8 @@ Potential next experiments:
 
 - Expand answer-quality evaluation beyond the current 14-question diagnostic subset.
 - Broader claim-level citation correctness and faithfulness checks.
-- MMR or document-diversity retrieval.
-- Document-level deduplication or per-document chunk caps.
+- Treat per-document cap=2 as a promising post-hoc retrieval diversification candidate, not the frozen configuration.
+- Compare against MMR or other document-diversity retrieval methods if a future scope opens that work.
 - Reranking.
 - Hybrid BM25 + dense retrieval.
 - Metadata-aware retrieval.
@@ -528,6 +542,7 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - [Chunking Experiments](docs/CHUNKING_EXPERIMENTS.md)
 - [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md)
 - [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md)
+- [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md)
 - [Threshold Experiments](docs/THRESHOLD_EXPERIMENTS.md)
 - [Final Configuration](docs/FINAL_CONFIGURATION.md)
 - [Held-out Evaluation](docs/HELDOUT_EVALUATION.md)

@@ -1,0 +1,3 @@
+variant,average_context_characters,average_approximate_tokens
+baseline,4941.8,1235.625
+cap2,4461.05,1115.425
