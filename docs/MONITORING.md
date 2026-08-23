@@ -38,6 +38,7 @@ Query metrics:
 - `cloudops_rag_generation_duration_seconds`
 - `cloudops_rag_fallback_total`
 - `cloudops_rag_openai_failures_total{operation}`
+- `cloudops_rag_external_retries_total{operation,reason}`
 
 Ingestion metrics:
 
@@ -58,8 +59,21 @@ Allowed labels include:
 - ingestion result: `completed`, `duplicate`, `failed`
 - ingestion failure reason from a bounded error-code set such as `fetch_failed`, `invalid_content`, `embedding_failed`, or `indexing_failed`
 - OpenAI operation: `embedding`, `generation`
+- external retry reason: `rate_limit`, `connection_error`, `server_error`
 
 The service does not use question text, answer text, `doc_id`, `chunk_id`, source URL, document URL, exception message, or user input as metric labels.
+
+
+## Retry Metric Semantics
+
+`cloudops_rag_external_retries_total{operation,reason}` increments when an additional retry attempt starts. It does not increment for the initial attempt.
+
+Allowed values are intentionally bounded:
+
+- `operation`: `embedding`, `generation`
+- `reason`: `rate_limit`, `connection_error`, `server_error`
+
+If a transient OpenAI failure succeeds after retry, this retry metric increments but `cloudops_rag_openai_failures_total{operation}` does not increment because that metric tracks final operation failures. Timeout, permanent 4xx, unknown exception, and application errors are not retried.
 
 ## Query Timing Semantics
 

@@ -41,7 +41,7 @@ OpenAI SDK exceptions are normalized at the client boundary:
 
 Generation failures happen after retrieval has succeeded, but the API intentionally returns an error response rather than a partial answer or sources-only response. This keeps the service contract simple: fallback is a successful controlled response, failure is an error response.
 
-Current retry policy: no application-level retry/backoff. The OpenAI SDK may apply its own retry behavior, but this project does not add another retry layer. That is appropriate for the current portfolio-scale synchronous API because blind retries could increase latency/cost and should distinguish 429/transient 5xx from invalid request/authentication failures. Future production hardening can add bounded retries for retryable timeout/429/5xx only.
+Current retry policy: OpenAI embedding and generation calls use bounded application-level retry/backoff for selected transient failures: rate limit / HTTP 429, connection failure, and selected 5xx server failures. The OpenAI SDK retry layer is disabled with `max_retries=0`, so one logical operation is limited to 3 total application attempts. Timeout and permanent 4xx failures are not retried, preserving the existing timeout/error contract and avoiding blind latency/cost amplification.
 
 ## 3. Ingestion Failure Handling
 
@@ -311,7 +311,7 @@ One interpretive nuance: MRR in Phase 8/9/10/final docs is raw-depth-10 MRR, whi
 - Multi-document completeness remains weak.
 - Threshold does not solve high-confidence semantic misretrieval.
 - Answer quality evaluation is diagnostic, not comprehensive.
-- No load testing, auth, async ingestion worker, production retry/backoff, reranking, MMR, hybrid search, or Kubernetes deployment yet.
+- No load testing, auth, async ingestion worker, circuit breaker, adaptive rate-limit handling, reranking, MMR, hybrid search, or Kubernetes deployment yet.
 
 ## 17. Final Assessment
 

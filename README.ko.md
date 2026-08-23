@@ -280,7 +280,7 @@ Failure handling:
 - Dependency timeout은 HTTP `504 external_dependency_timeout`.
 - Non-timeout dependency failure는 HTTP `503 external_dependency_unavailable`.
 - Fallback과 dependency failure는 별개의 flow.
-- Application-level retry/backoff는 현재 없으며 production hardening future work로 남겨두었습니다.
+- Retry 가능한 OpenAI failure에는 application-level bounded retry/backoff를 적용하며 최대 3회까지 시도합니다. Timeout과 permanent 4xx failure는 빠르게 실패 처리합니다.
 - `main` 브랜치의 push/PR마다 GitHub Actions에서 테스트와 Docker build를 자동 검증합니다.
 
 ## Quick Start
@@ -360,7 +360,7 @@ docker run --rm \
 - ConfigMap/Secrets semantic confusion이 남아 있습니다.
 - LLM Judge는 human verification을 거쳤지만 sample이 작습니다.
 - Threshold fallback은 semantic misretrieval을 해결하지 못합니다.
-- Application-level retry/backoff는 아직 없습니다.
+- Retry/backoff는 일부 transient OpenAI failure에만 제한적으로 적용되며, circuit breaker나 adaptive rate-limit control은 아직 없습니다.
 - cap=2 diversification은 새로운 untouched set에서 검증되지 않았습니다.
 - Docker image size는 1.07GB로 크며, 현재 실측 기준 주요 원인은 application source가 아니라 runtime dependency footprint입니다.
 
@@ -372,7 +372,7 @@ docker run --rm \
 4. MMR, reranking, hybrid retrieval 비교.
 5. Query rewriting for multi-intent troubleshooting.
 6. Metadata-aware retrieval.
-7. Retryable external failure에 대한 bounded retry/backoff.
+7. 더 큰 deployment를 위한 circuit breaker, adaptive rate-limit handling, async retry queue.
 8. 더 큰 answer-quality evaluation.
 9. Retrieval context를 고정하고 prompt 또는 generation model 설정만 바꾸는 controlled generation experiment.
 10. Token-based, section-aware, semantic chunking 실험.

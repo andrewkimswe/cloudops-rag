@@ -220,7 +220,22 @@ Examples:
 - `504 external_dependency_timeout`: external dependency timed out
 - `500 internal_error`: unexpected API failure
 
-## 9. Fallback Behavior
+
+## 9. External Retry Policy
+
+OpenAI embedding and answer generation use bounded application-level retry for selected transient failures. The OpenAI SDK client is configured with `max_retries=0` so the service-level policy is the authoritative retry layer.
+
+Policy:
+
+- max attempts: 3 total attempts, including the initial request
+- backoff: approximately 0.25s before retry 1 and 0.50s before retry 2
+- jitter: small production jitter; tests inject deterministic sleep/random and do not actually sleep
+- retryable: rate limit / HTTP 429, connection failure, and selected server-side 5xx failures
+- non-retryable: timeout, HTTP 400/401/403/permanent 4xx, unknown exceptions, and application logic errors
+
+Timeout semantics are unchanged: embedding timeout maps to `504 external_dependency_timeout`, generation timeout maps to `504 external_dependency_timeout`, and timeout is not retried. Non-timeout dependency failures that remain after retries map to `503 external_dependency_unavailable`. Threshold fallback is still a successful low-confidence retrieval response and skips LLM generation entirely.
+
+## 10. Fallback Behavior
 
 The API reuses the Phase 12 fallback logic.
 
@@ -255,7 +270,7 @@ Fallback response:
 }
 ```
 
-## 10. Example Requests
+## 11. Example Requests
 
 Health:
 

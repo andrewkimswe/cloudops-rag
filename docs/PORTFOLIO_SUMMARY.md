@@ -96,8 +96,8 @@ cap=2는 duplicate chunk occupancy 문제를 줄이는 promising Dev-set experim
 12. 왜 synchronous ingestion을 선택했나요?
     - 현재 문서 규모와 포트폴리오 목적에서는 흐름이 단순하고 관찰 가능하기 때문입니다. fetch, parse, chunk, embed, index 상태를 한 request 안에서 추적할 수 있습니다. 대용량 문서나 동시 ingestion이 많아지면 background worker가 필요합니다.
 
-13. retry/backoff가 왜 아직 없나요?
-    - 이 프로젝트는 portfolio-scale synchronous API라 무분별한 retry가 latency와 cost를 늘릴 수 있습니다. retry는 429, timeout, transient 5xx처럼 retryable error를 구분해 bounded하게 설계해야 합니다. 현재는 timeout/failure를 명확히 error response와 metric으로 남기는 데 초점을 뒀습니다.
+13. retry/backoff는 어떻게 설계했나요?
+    - OpenAI embedding/generation 호출에만 bounded application-level retry를 적용했습니다. SDK retry는 `max_retries=0`으로 비활성화해 중첩 retry를 막고, 한 logical operation은 최대 3회만 시도합니다. 429, connection failure, selected 5xx만 재시도하며 timeout과 permanent 4xx는 재시도하지 않습니다.
 
 14. Prometheus label cardinality는 어떻게 관리했나요?
     - `/metrics` label에는 question text, answer text, URL, doc_id, chunk_id, raw exception message 같은 high-cardinality 값을 넣지 않았습니다. 대신 route, method, status code, operation, bounded failure reason처럼 제한된 label만 사용했습니다. 이는 metric storage 폭증과 민감 정보 노출을 줄이기 위한 설계입니다.

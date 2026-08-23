@@ -244,7 +244,7 @@ Failure handling:
 - Timeout response: `504 external_dependency_timeout`.
 - Non-timeout dependency failure: `503 external_dependency_unavailable`.
 - Fallback is not an exception path; it is a controlled low-confidence retrieval response.
-- Application-level retry/backoff is not implemented yet and remains future production hardening.
+- Retryable OpenAI failures use bounded application-level retry/backoff with at most 3 total attempts; timeouts and permanent 4xx failures fail fast.
 - GitHub Actions runs the test suite and Docker build on pushes and pull requests to `main`.
 
 See [REST API](docs/API.md), [Document Ingestion](docs/INGESTION.md), and [Docker](docs/DOCKER.md).
@@ -401,7 +401,7 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - Answer evaluation is diagnostic-scale, not a broad answer-quality benchmark.
 - LLM-as-a-Judge results were human-checked, but still cover only 11 generated answers.
 - Threshold fallback does not prevent high-confidence semantic misretrieval.
-- No production retry/backoff layer yet.
+- Retry/backoff is bounded and limited to selected transient OpenAI failures; no circuit breaker or adaptive rate-limit control is implemented.
 - The cap=2 diversification candidate has not been validated on a new untouched held-out set.
 - Docker image size remains large: the current audit showed `1.07GB` in `docker images`, driven primarily by runtime dependency packaging rather than application source size.
 
@@ -413,7 +413,7 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 4. Add query rewriting for multi-intent troubleshooting questions.
 5. Use metadata-aware retrieval for provider/category/source filtering.
 6. Improve multi-document evidence retrieval.
-7. Add bounded retry/backoff for retryable external failures.
+7. Add circuit breaker, adaptive rate-limit handling, or async retry queues for larger deployments.
 8. Expand answer-quality evaluation beyond the current diagnostic subset.
 9. Run controlled generation experiments that hold retrieval context fixed while varying prompt or generation model configuration.
 10. Explore token-based, section-aware, or semantic chunking.

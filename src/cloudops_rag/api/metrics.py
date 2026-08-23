@@ -61,6 +61,11 @@ OPENAI_FAILURES_TOTAL = Counter(
     "OpenAI dependency failures by operation.",
     ["operation"],
 )
+EXTERNAL_RETRIES_TOTAL = Counter(
+    "cloudops_rag_external_retries_total",
+    "Additional retry attempts for transient external dependency failures.",
+    ["operation", "reason"],
+)
 
 
 def render_metrics() -> bytes:

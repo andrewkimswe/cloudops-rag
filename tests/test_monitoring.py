@@ -71,7 +71,11 @@ class FakeVectorStore:
 
 
 class FakeLLM:
+    def __init__(self):
+        self.calls = 0
+
     def answer(self, question: str, retrieved_chunks: list[RetrievedChunk]) -> str:
+        self.calls += 1
         return "grounded answer"
 
 
@@ -138,11 +142,13 @@ def test_fallback_metrics_increment_without_generation_observation():
     before_query = metric_value("cloudops_rag_query_requests_total", {"result": "fallback"})
     before_fallback = metric_value("cloudops_rag_fallback_total")
     before_generation = metric_value("cloudops_rag_generation_duration_seconds_count")
+    before_retries = metric_value("cloudops_rag_external_retries_total", {"operation": "generation", "reason": "server_error"})
+    llm = FakeLLM()
 
     service = RagService(
         vector_store=FakeVectorStore(score=1.5),
         embedder=FakeEmbedder(),
-        llm=FakeLLM(),
+        llm=llm,
         top_k=5,
         distance_threshold=1.042478,
     )
@@ -150,9 +156,14 @@ def test_fallback_metrics_increment_without_generation_observation():
     result = service.query("out of scope question")
 
     assert result.fallback is True
+    assert llm.calls == 0
     assert metric_value("cloudops_rag_query_requests_total", {"result": "fallback"}) == before_query + 1
     assert metric_value("cloudops_rag_fallback_total") == before_fallback + 1
     assert metric_value("cloudops_rag_generation_duration_seconds_count") == before_generation
+    assert metric_value(
+        "cloudops_rag_external_retries_total",
+        {"operation": "generation", "reason": "server_error"},
+    ) == before_retries
 
 
 class FakeCollection:
