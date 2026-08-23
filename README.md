@@ -438,3 +438,7 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md)
 - [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md)
 - [Limitations](docs/LIMITATIONS.md)
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).

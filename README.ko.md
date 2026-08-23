@@ -394,3 +394,7 @@ docker run --rm \
 - [Document Ingestion](docs/INGESTION.md)
 - [Docker](docs/DOCKER.md)
 - [Monitoring](docs/MONITORING.md)
+
+## 라이선스
+
+이 프로젝트는 MIT License로 공개됩니다. 자세한 내용은 [LICENSE](./LICENSE)를 참고하세요.
