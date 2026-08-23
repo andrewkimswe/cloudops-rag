@@ -1,0 +1,15 @@
+eval_id,source_eval_id,expected_fallback,actual_fallback,fallback_correct,empty_missing_answer,unsupported_generation_on_fallback,source_hit_count,source_expected_count,source_any_hit,source_all_hit,matched_source_doc_ids,multi_source_all_hit,failure_category
+ans_eval_001,eval_001,False,False,True,False,False,1,1,True,True,"[""k8s_debug_pods""]",,answer_generated
+ans_eval_002,eval_003,False,False,True,False,False,1,1,True,True,"[""k8s_debug_services""]",,answer_generated
+ans_eval_003,eval_012,False,False,True,False,False,1,1,True,True,"[""aws_eks_iam_troubleshooting""]",,answer_generated
+ans_eval_004,eval_016,False,False,True,False,False,1,1,True,True,"[""aws_alb_troubleshooting""]",,answer_generated
+ans_eval_005,eval_035,False,False,True,False,False,1,1,True,True,"[""aws_rds_troubleshooting""]",,answer_generated
+ans_eval_006,eval_026,False,False,True,False,False,1,1,True,True,"[""k8s_liveness_readiness_startup_probes""]",,answer_generated
+ans_eval_007,eval_027,False,False,True,False,False,0,1,False,False,[],,missing_expected_source
+ans_eval_008,eval_028,False,False,True,False,False,1,1,True,True,"[""aws_alb_monitoring""]",,answer_generated
+ans_eval_009,eval_043,False,False,True,False,False,1,2,True,False,"[""k8s_secrets""]",False,partial_multi_document_sources
+ans_eval_010,eval_045,False,False,True,False,False,1,2,True,False,"[""aws_alb_troubleshooting""]",False,partial_multi_document_sources
+ans_eval_011,eval_046,False,False,True,False,False,1,2,True,False,"[""aws_rds_troubleshooting""]",False,partial_multi_document_sources
+ans_eval_012,eval_038,True,True,True,False,False,0,0,False,False,[],,correct_fallback
+ans_eval_013,eval_049,True,True,True,False,False,0,0,False,False,[],,correct_fallback
+ans_eval_014,eval_050,True,True,True,False,False,0,0,False,False,[],,correct_fallback

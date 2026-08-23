@@ -1,0 +1,61 @@
+{
+  "run_id": "answer_judge_20260823T061220Z",
+  "judge_model": "gpt-4.1-mini",
+  "judge_temperature": 0,
+  "answer_judge_calls": 11,
+  "claim_level_judge_calls": 5,
+  "evaluated_generated_answers": 11,
+  "fallback_rows": 3,
+  "fallback_correct_count": 3,
+  "score_distribution": {
+    "correctness_score": {
+      "score_2_count": 7,
+      "score_1_count": 3,
+      "score_0_count": 1,
+      "average": 1.5455
+    },
+    "completeness_score": {
+      "score_2_count": 3,
+      "score_1_count": 6,
+      "score_0_count": 2,
+      "average": 1.0909
+    },
+    "faithfulness_score": {
+      "score_2_count": 11,
+      "score_1_count": 0,
+      "score_0_count": 0,
+      "average": 2.0
+    },
+    "source_support_score": {
+      "score_2_count": 8,
+      "score_1_count": 3,
+      "score_0_count": 0,
+      "average": 1.7273
+    }
+  },
+  "claim_support_counts": {
+    "supported": 24,
+    "unsupported": 2,
+    "contradicted": 1,
+    "unclear": 4
+  },
+  "failure_type_counts": {
+    "generation_failure": 5,
+    "no_material_failure": 3,
+    "retrieval_failure": 1,
+    "combined_failure": 2
+  },
+  "human_review_pending_count": 9,
+  "outputs": {
+    "judge": "results/answer_evaluation/answer_eval_judge.csv",
+    "claims": "results/answer_evaluation/answer_eval_claims.csv",
+    "failures": "results/answer_evaluation/answer_eval_failures.csv",
+    "human_review": "results/answer_evaluation/answer_eval_human_review.csv"
+  },
+  "notes": [
+    "Judge output is diagnostic evidence, not absolute ground truth.",
+    "Generated answer snapshot was reused and not regenerated.",
+    "Out-of-scope fallback rows are summarized separately from generated answer scores."
+  ],
+  "failure_type_policy": "final_failure_type combines judge scores, deterministic missing expected sources, and claim-level unsupported/contradicted findings for candidate rows."
+}

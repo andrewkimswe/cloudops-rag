@@ -1,0 +1,24 @@
+{
+  "run_id": "answer_eval_20260823T060237Z",
+  "dataset": "data/answer_evaluation/answer_eval_diagnostic.csv",
+  "generation_output": "results/answer_evaluation/answer_eval_generation.csv",
+  "deterministic_metrics_output": "results/answer_evaluation/answer_eval_deterministic_metrics.csv",
+  "question_count": 14,
+  "llm_generation_calls": 11,
+  "llm_judge_calls": 0,
+  "generation_model": "gpt-4o-mini",
+  "embedding_model": "text-embedding-3-small",
+  "retrieval_top_k": 5,
+  "distance_threshold": 1.042478,
+  "generation_temperature": 0,
+  "fallback_correct_count": 14,
+  "source_any_hit_count": 10,
+  "source_all_hit_count": 7,
+  "multi_source_all_hit_count": 0,
+  "failure_category_counts": {
+    "answer_generated": 7,
+    "missing_expected_source": 1,
+    "partial_multi_document_sources": 3,
+    "correct_fallback": 3
+  }
+}
