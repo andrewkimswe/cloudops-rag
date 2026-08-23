@@ -252,7 +252,7 @@ Docker 구성:
 - Chroma index와 runtime data는 bind mount로 persistence.
 - `.env`, local index, runtime data는 image에 포함하지 않음.
 
-현재 Docker image size는 약 1.06GB로 관찰되었고, 이는 limitation 및 future optimization 대상입니다.
+현재 Docker image size는 `docker images` 기준 1.07GB로 측정되었습니다. 컨테이너 내부 확인 결과 주요 비중은 애플리케이션 코드가 아니라 Python runtime dependency입니다(`/usr/local/lib/python3.12/site-packages`: 647MB, `/app`: 약 2MB).
 
 ## Monitoring / Failure Handling
 
@@ -359,6 +359,7 @@ docker run --rm \
 - Threshold fallback은 semantic misretrieval을 해결하지 못합니다.
 - Application-level retry/backoff는 아직 없습니다.
 - cap=2 diversification은 새로운 untouched set에서 검증되지 않았습니다.
+- Docker image size는 1.07GB로 크며, 현재 실측 기준 주요 원인은 application source가 아니라 runtime dependency footprint입니다.
 
 ## Future Work
 

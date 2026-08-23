@@ -233,6 +233,7 @@ Engineering choices:
 - Synchronous ingestion for portfolio-scale simplicity.
 - Docker runtime with non-root user, healthcheck, and bind-mount persistence.
 - `.env` secrets are not baked into the image.
+- Docker image size was measured at `1.07GB` in `docker images` on the current build. A container-level audit showed that most of the runtime filesystem comes from Python dependencies (`/usr/local/lib/python3.12/site-packages`: 647MB), while `/app` project files contribute about 2MB.
 
 Failure handling:
 
@@ -399,7 +400,7 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - Threshold fallback does not prevent high-confidence semantic misretrieval.
 - No production retry/backoff layer yet.
 - The cap=2 diversification candidate has not been validated on a new untouched held-out set.
-- Docker image size is still large, about 1.06GB in the latest observed verification.
+- Docker image size remains large: the current audit showed `1.07GB` in `docker images`, driven primarily by runtime dependency packaging rather than application source size.
 
 ## Future Work
 

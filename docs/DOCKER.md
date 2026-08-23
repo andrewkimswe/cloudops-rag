@@ -167,7 +167,107 @@ Security choices:
 - Docker health check does not call OpenAI
 - local indexes, runtime status, raw processed documents, and results are excluded from the image
 
-## 11. Current Limitations
+## 11. Image Size Audit
+
+Measured on the current Docker build for `cloudops-rag:image-audit`:
+
+| Item | Result |
+|---|---:|
+| Clean build status | success |
+| Clean build duration | 44 seconds |
+| `docker images` size | 1.07GB |
+| `docker image inspect .Size` | 217,932,432 bytes / 217.93 MB / 207.84 MiB |
+| Container root filesystem (`docker inspect -s`) | 848,109,568 bytes |
+| Architecture | linux/arm64 |
+
+The `docker images` value is the user-visible Docker CLI image size. The `docker image inspect .Size` value is also recorded because it is the exact field requested for this audit, but it is not the same number users usually see in `docker images`.
+
+Largest Docker history layers:
+
+| Layer | Size |
+|---|---:|
+| `python -m pip install --upgrade pip && python -m pip install .` | 678MB |
+| Debian base layer | 108MB |
+| Python runtime build/install layer from `python:3.12.14-slim-bookworm` | 48.4MB |
+| base image certificates/netbase/tzdata layer | 10.4MB |
+| runtime directory creation and ownership | 1.72MB |
+| `COPY src ./src` | 672kB |
+| `COPY scripts ./scripts` | 508kB |
+| `COPY docs ./docs` | 250kB |
+
+Container filesystem usage:
+
+| Path | Size |
+|---|---:|
+| `/usr` | 787MB |
+| `/usr/local` | 679MB |
+| `/usr/local/lib` | 677MB |
+| `/usr/local/lib/python3.12/site-packages` | 647MB |
+| `/app` | 2MB |
+
+Largest measured site-packages entries:
+
+| Package or directory | Size | Dependency source |
+|---|---:|---|
+| `kubernetes` | 83MB | transitive dependency of `chromadb` |
+| `pandas` | 77MB | direct project dependency |
+| `onnxruntime` | 58MB | transitive dependency of `chromadb` |
+| `chromadb_rust_bindings` | 52MB | installed with `chromadb` |
+| `numpy` | 40MB | direct project dependency; also required by `chromadb`, `pandas`, `onnxruntime`, `langchain-community` |
+| `numpy.libs` | 28MB | native libraries installed with `numpy` |
+| `langchain_community` | 24MB | direct project dependency |
+| `sqlalchemy` | 24MB | transitive dependency of `langchain-community` |
+| `zstandard` | 22MB | transitive dependency of `langsmith` / LangChain stack |
+| `openai` | 20MB | direct project dependency and required by `langchain-openai` |
+| `grpc` | 17MB | transitive dependency of `chromadb` and OpenTelemetry exporter |
+| `uvloop` | 16MB | installed through `uvicorn[standard]` |
+| `langchain_classic` | 15MB | transitive dependency of `langchain-community` |
+| `tokenizers` | 11MB | transitive dependency of `chromadb` |
+| `hf_xet` | 11MB | transitive dependency through `huggingface_hub` / `tokenizers` |
+
+Checked optional or suspected large dependencies:
+
+| Package | Docker runtime status |
+|---|---|
+| `sentence-transformers` | absent |
+| `torch` | absent |
+| `scipy` | absent |
+
+Project file contribution inside `/app` is small:
+
+| Path | Size |
+|---|---:|
+| `/app/src` | 644kB |
+| `/app/scripts` | 488kB |
+| `/app/docs` | 236kB |
+| `/app/README.md` | 20kB |
+| `/app/pyproject.toml` | 4kB |
+| `/app/data/manifests` | 8kB |
+
+Root cause classification:
+
+| Class | Contributor | Evidence |
+|---|---|---|
+| Primary | Python runtime dependency footprint | pip install layer is 678MB; site-packages is 647MB |
+| Secondary | Base Debian/Python runtime layers | Debian base is 108MB; Python runtime layer is 48.4MB |
+| Negligible | Application source, docs, scripts, manifests | `/app` totals about 2MB |
+
+The image size is therefore primarily a dependency-packaging issue, not an application-code-size issue. Chroma is a meaningful contributor through its transitive dependencies (`kubernetes`, `onnxruntime`, `chromadb_rust_bindings`, `tokenizers`, `grpcio`, OpenTelemetry packages), but the image is not large because of `sentence-transformers` or `torch`; neither package is installed in the default Docker runtime image.
+
+Future optimization candidates:
+
+| Candidate | Expected impact | Risk | Runtime behavior could change? |
+|---|---|---|---|
+| Revisit Chroma packaging or vector-store choice | high | medium | yes |
+| Split evaluation/analysis dependencies from API runtime dependencies | medium | medium | possibly |
+| Reconsider direct runtime need for `pandas` | medium | medium | possibly |
+| Avoid `uvicorn[standard]` if standard extras are not required | low to medium | low | possibly |
+| Multi-stage build | low | low | unlikely, because there is no large compiler/cache artifact in the final app layer and `PIP_NO_CACHE_DIR=1` is already set |
+| Exclude more project files | low | low | no, but `/app` is already only about 2MB |
+
+No optimization was applied in this audit.
+
+## 12. Current Limitations
 
 Docker packaging does not remove the existing project limitations:
 
@@ -178,3 +278,4 @@ Docker packaging does not remove the existing project limitations:
 - duplicate chunks can still reduce top-k diversity
 - semantic confusion cases remain
 - runtime corpus expansion can change retrieval score distributions, so the development-selected threshold may require recalibration in production
+- Docker image size is still large and is mainly driven by runtime dependency packaging
