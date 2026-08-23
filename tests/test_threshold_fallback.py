@@ -27,6 +27,14 @@ class FakeVectorStore:
     def retrieve(self, question, embedder, top_k):
         return [make_chunk(self.score)]
 
+    def retrieve_by_embedding(self, query_embedding, top_k):
+        return [make_chunk(self.score)]
+
+
+class FakeEmbedder:
+    def embed_query(self, text):
+        return [1.0]
+
 
 class FakeLLM:
     def __init__(self):
@@ -41,7 +49,7 @@ def test_fallback_skips_llm_and_returns_no_sources():
     llm = FakeLLM()
     service = RagService(
         vector_store=FakeVectorStore(score=1.2),
-        embedder=object(),
+        embedder=FakeEmbedder(),
         llm=llm,
         top_k=5,
         distance_threshold=1.04,
@@ -60,7 +68,7 @@ def test_accept_calls_llm_and_returns_sources():
     llm = FakeLLM()
     service = RagService(
         vector_store=FakeVectorStore(score=0.8),
-        embedder=object(),
+        embedder=FakeEmbedder(),
         llm=llm,
         top_k=5,
         distance_threshold=1.04,

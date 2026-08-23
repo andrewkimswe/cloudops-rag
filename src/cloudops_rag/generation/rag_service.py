@@ -2,8 +2,18 @@
 
 from __future__ import annotations
 
+import time
 from typing import Protocol
 
+from cloudops_rag.api.metrics import (
+    EMBEDDING_DURATION_SECONDS,
+    FALLBACK_TOTAL,
+    GENERATION_DURATION_SECONDS,
+    OPENAI_FAILURES_TOTAL,
+    QUERY_DURATION_SECONDS,
+    QUERY_REQUESTS_TOTAL,
+    RETRIEVAL_DURATION_SECONDS,
+)
 from cloudops_rag.retrieval.chroma_store import ChromaVectorStore, Embedder
 from cloudops_rag.retrieval.schemas import RagResult, RetrievedChunk, Source
 
@@ -30,28 +40,58 @@ class RagService:
         self.fallback_answer = fallback_answer
 
     def query(self, question: str) -> RagResult:
-        retrieved = self.vector_store.retrieve(question, self.embedder, self.top_k)
-        rank_1_distance = retrieved[0].score if retrieved else None
-        if self._should_fallback(rank_1_distance):
+        started = time.perf_counter()
+        result_label = "error"
+        try:
+            embedding_started = time.perf_counter()
+            try:
+                query_embedding = self.embedder.embed_query(question)
+            except Exception:
+                OPENAI_FAILURES_TOTAL.labels(operation="embedding").inc()
+                raise
+            finally:
+                EMBEDDING_DURATION_SECONDS.observe(time.perf_counter() - embedding_started)
+
+            retrieval_started = time.perf_counter()
+            retrieved = self.vector_store.retrieve_by_embedding(query_embedding, self.top_k)
+            RETRIEVAL_DURATION_SECONDS.observe(time.perf_counter() - retrieval_started)
+
+            rank_1_distance = retrieved[0].score if retrieved else None
+            if self._should_fallback(rank_1_distance):
+                result_label = "fallback"
+                FALLBACK_TOTAL.inc()
+                return RagResult(
+                    question=question,
+                    answer=self.fallback_answer,
+                    sources=[],
+                    retrieved_chunks=retrieved,
+                    fallback=True,
+                    retrieval_distance=rank_1_distance,
+                    distance_threshold=self.distance_threshold,
+                )
+
+            generation_started = time.perf_counter()
+            try:
+                answer = self.llm.answer(question, retrieved)
+            except Exception:
+                OPENAI_FAILURES_TOTAL.labels(operation="generation").inc()
+                raise
+            finally:
+                GENERATION_DURATION_SECONDS.observe(time.perf_counter() - generation_started)
+
+            result_label = "answered"
             return RagResult(
                 question=question,
-                answer=self.fallback_answer,
-                sources=[],
+                answer=answer,
+                sources=deduplicate_sources(retrieved),
                 retrieved_chunks=retrieved,
-                fallback=True,
+                fallback=False,
                 retrieval_distance=rank_1_distance,
                 distance_threshold=self.distance_threshold,
             )
-        answer = self.llm.answer(question, retrieved)
-        return RagResult(
-            question=question,
-            answer=answer,
-            sources=deduplicate_sources(retrieved),
-            retrieved_chunks=retrieved,
-            fallback=False,
-            retrieval_distance=rank_1_distance,
-            distance_threshold=self.distance_threshold,
-        )
+        finally:
+            QUERY_REQUESTS_TOTAL.labels(result=result_label).inc()
+            QUERY_DURATION_SECONDS.observe(time.perf_counter() - started)
 
     def _should_fallback(self, rank_1_distance: float | None) -> bool:
         if self.distance_threshold is None:

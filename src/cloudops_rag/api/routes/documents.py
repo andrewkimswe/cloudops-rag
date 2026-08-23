@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
 from cloudops_rag.api.dependencies import ApiState, get_api_state
 from cloudops_rag.api.errors import ApiError
+from cloudops_rag.api.metrics import (
+    INGESTION_DURATION_SECONDS,
+    INGESTION_FAILURES_TOTAL,
+    INGESTION_REQUESTS_TOTAL,
+)
 from cloudops_rag.api.schemas.common import ErrorResponse
 from cloudops_rag.api.schemas.documents import (
     DocumentRegistrationRequest,
@@ -30,16 +36,30 @@ def register_document(
     request: DocumentRegistrationRequest,
     state: Annotated[ApiState, Depends(get_api_state)],
 ) -> DocumentRegistrationResponse:
+    started = time.perf_counter()
     source_url = str(request.source_url)
-    result = state.ingestion_service.ingest(
-        source_url=source_url,
-        title=request.title,
-        provider=request.provider,
-        category=request.category,
-    )
-    record = result.record
-    if record.status == "failed":
-        raise ApiError(400, record.error_code or "ingestion_failed", record.message or "Document ingestion failed.")
+    try:
+        result = state.ingestion_service.ingest(
+            source_url=source_url,
+            title=request.title,
+            provider=request.provider,
+            category=request.category,
+        )
+        record = result.record
+        if record.status == "failed":
+            reason = bounded_ingestion_failure_reason(record.error_code)
+            INGESTION_REQUESTS_TOTAL.labels(result="failed").inc()
+            INGESTION_FAILURES_TOTAL.labels(reason=reason).inc()
+            raise ApiError(400, record.error_code or "ingestion_failed", record.message or "Document ingestion failed.")
+        INGESTION_REQUESTS_TOTAL.labels(result="duplicate" if result.duplicate else "completed").inc()
+    except ApiError:
+        raise
+    except Exception:
+        INGESTION_REQUESTS_TOTAL.labels(result="failed").inc()
+        INGESTION_FAILURES_TOTAL.labels(reason="ingestion_failed").inc()
+        raise
+    finally:
+        INGESTION_DURATION_SECONDS.observe(time.perf_counter() - started)
 
     return DocumentRegistrationResponse(
         doc_id=record.doc_id,
@@ -51,6 +71,21 @@ def register_document(
         duplicate=result.duplicate,
         timings_ms=record.timings_ms,
     )
+
+
+def bounded_ingestion_failure_reason(error_code: str | None) -> str:
+    allowed = {
+        "fetch_timeout",
+        "fetch_failed",
+        "invalid_content",
+        "invalid_url",
+        "parsing_failed",
+        "indexing_failed",
+        "ingestion_failed",
+    }
+    if error_code in allowed:
+        return error_code
+    return "ingestion_failed"
 
 
 @router.get(

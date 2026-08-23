@@ -308,6 +308,7 @@ The evaluated retrieval pipeline is exposed through FastAPI:
 | Endpoint | Purpose |
 |---|---|
 | `GET /health` | Check API and Chroma collection availability without calling OpenAI. |
+| `GET /metrics` | Expose Prometheus-compatible service metrics without calling OpenAI or Chroma. |
 | `POST /query` | Run retrieval, threshold fallback, generation, and source return. |
 | `POST /documents` | Synchronously fetch, parse, chunk, embed, and index one runtime document. |
 | `GET /documents/{id}/status` | Return persisted runtime ingestion status. |
@@ -322,6 +323,20 @@ Service behavior:
 - Persists runtime document status in local JSON.
 
 See [REST API](docs/API.md) for request/response contracts.
+
+## Monitoring
+
+Phase 18 adds Prometheus-compatible application metrics at:
+
+```text
+GET /metrics
+```
+
+The endpoint exposes bounded-label metrics for HTTP requests, query lifecycle latency, fallback decisions, OpenAI dependency failures, and runtime ingestion outcomes. Metric labels intentionally avoid question text, answer text, document URLs, `doc_id`, `chunk_id`, exception messages, and other high-cardinality user input.
+
+The Docker health check remains `GET /health`; `/metrics` is for scraping and smoke validation. Phase 18 does not add a Prometheus server, Grafana, OpenTelemetry, alerting, authentication, or Kubernetes manifests.
+
+See [Monitoring](docs/MONITORING.md) for metric names and label policy.
 
 ## Runtime Document Ingestion
 
@@ -406,7 +421,7 @@ Potential next experiments:
 - Query rewriting for multi-intent troubleshooting questions.
 - Token-based, section-aware, or semantic chunking.
 - Larger AWS/Kubernetes corpus and larger held-out evaluation set.
-- Monitoring in Phase 18 of the original project plan.
+- Prometheus server, Grafana dashboards, alerts, and OpenTelemetry tracing.
 
 ## Quick Start
 
@@ -553,3 +568,4 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - [REST API](docs/API.md)
 - [Document Ingestion](docs/INGESTION.md)
 - [Docker](docs/DOCKER.md)
+- [Monitoring](docs/MONITORING.md)

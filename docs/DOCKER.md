@@ -99,6 +99,14 @@ Health:
 curl http://localhost:8000/health
 ```
 
+Metrics:
+
+```bash
+curl http://localhost:8000/metrics
+```
+
+`/metrics` exposes Prometheus-compatible application metrics and does not call OpenAI or Chroma. The Docker health check remains `/health`.
+
 In-scope query:
 
 ```bash

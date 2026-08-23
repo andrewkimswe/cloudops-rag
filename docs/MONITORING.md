@@ -1,0 +1,92 @@
+# Monitoring
+
+## Goal
+
+Phase 18 adds Prometheus-compatible metrics to the FastAPI RAG service without changing the frozen retrieval configuration, threshold, answer generation behavior, or evaluation results.
+
+The metrics endpoint is intentionally lightweight:
+
+```text
+GET /metrics
+```
+
+It does not call OpenAI, Chroma, or the RAG pipeline.
+
+## Metric Prefix
+
+All project-specific metrics use the prefix:
+
+```text
+cloudops_rag_
+```
+
+The endpoint may also expose default Python process metrics from `prometheus-client`.
+
+## Exposed Metrics
+
+HTTP metrics:
+
+- `cloudops_rag_http_requests_total{method,endpoint,status_code}`
+- `cloudops_rag_http_request_duration_seconds{method,endpoint}`
+
+Query metrics:
+
+- `cloudops_rag_query_requests_total{result}`
+- `cloudops_rag_query_duration_seconds`
+- `cloudops_rag_embedding_duration_seconds`
+- `cloudops_rag_retrieval_duration_seconds`
+- `cloudops_rag_generation_duration_seconds`
+- `cloudops_rag_fallback_total`
+- `cloudops_rag_openai_failures_total{operation}`
+
+Ingestion metrics:
+
+- `cloudops_rag_ingestion_requests_total{result}`
+- `cloudops_rag_ingestion_duration_seconds`
+- `cloudops_rag_ingestion_failures_total{reason}`
+
+## Label Policy
+
+Labels are intentionally bounded to avoid high-cardinality Prometheus series.
+
+Allowed labels include:
+
+- HTTP method
+- route template endpoint, such as `/documents/{doc_id}/status`
+- HTTP status code
+- query result: `answered`, `fallback`, `error`
+- ingestion result: `completed`, `duplicate`, `failed`
+- ingestion failure reason from a bounded error-code set
+- OpenAI operation: `embedding`, `generation`
+
+The service does not use question text, answer text, `doc_id`, `chunk_id`, source URL, document URL, exception message, or user input as metric labels.
+
+## Query Timing Semantics
+
+`cloudops_rag_query_duration_seconds` measures the full query lifecycle:
+
+```text
+embedding -> retrieval -> threshold decision -> generation when accepted
+```
+
+If threshold fallback rejects the query, generation is skipped and `cloudops_rag_generation_duration_seconds` is not observed for that request.
+
+## Docker
+
+The Docker image exposes the same endpoint:
+
+```bash
+curl http://localhost:8000/metrics
+```
+
+The Dockerfile health check remains pointed at:
+
+```text
+GET /health
+```
+
+## Current Scope
+
+Phase 18 adds application metrics only. It does not add a Prometheus server, Grafana dashboard, OpenTelemetry tracing, alert rules, authentication, or Kubernetes deployment manifests.
+
+The post-hoc retrieval diversification result, including cap=2, remains a candidate experiment and is not promoted to the production/frozen retriever.

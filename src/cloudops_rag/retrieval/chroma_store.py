@@ -93,6 +93,9 @@ class ChromaVectorStore:
 
     def retrieve(self, query: str, embedder: Embedder, top_k: int = 3) -> list[RetrievedChunk]:
         query_embedding = embedder.embed_query(query)
+        return self.retrieve_by_embedding(query_embedding, top_k)
+
+    def retrieve_by_embedding(self, query_embedding: list[float], top_k: int = 3) -> list[RetrievedChunk]:
         result = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=top_k,

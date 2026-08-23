@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -11,7 +12,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from cloudops_rag.api.dependencies import build_api_state
-from cloudops_rag.api.routes import documents, health, query
+from cloudops_rag.api.metrics import HTTP_REQUEST_DURATION_SECONDS, HTTP_REQUESTS_TOTAL
+from cloudops_rag.api.routes import documents, health, metrics, query
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +37,40 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(query.router)
     app.include_router(documents.router)
+    app.include_router(metrics.router)
+    register_metrics_middleware(app)
     register_exception_handlers(app)
     return app
+
+
+def register_metrics_middleware(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def prometheus_http_metrics(request: Request, call_next):
+        started = time.perf_counter()
+        status_code = "500"
+        try:
+            response = await call_next(request)
+            status_code = str(response.status_code)
+            return response
+        finally:
+            endpoint = route_template(request)
+            HTTP_REQUESTS_TOTAL.labels(
+                method=request.method,
+                endpoint=endpoint,
+                status_code=status_code,
+            ).inc()
+            HTTP_REQUEST_DURATION_SECONDS.labels(
+                method=request.method,
+                endpoint=endpoint,
+            ).observe(time.perf_counter() - started)
+
+
+def route_template(request: Request) -> str:
+    route = request.scope.get("route")
+    path = getattr(route, "path", None)
+    if isinstance(path, str):
+        return path
+    return "unmatched"
 
 
 def register_exception_handlers(app: FastAPI) -> None:
