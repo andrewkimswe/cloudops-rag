@@ -279,6 +279,7 @@ Failure handling:
 - Non-timeout dependency failure는 HTTP `503 external_dependency_unavailable`.
 - Fallback과 dependency failure는 별개의 flow.
 - Application-level retry/backoff는 현재 없으며 production hardening future work로 남겨두었습니다.
+- `main` 브랜치의 push/PR마다 GitHub Actions에서 테스트와 Docker build를 자동 검증합니다.
 
 ## Quick Start
 

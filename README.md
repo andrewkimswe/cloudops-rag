@@ -243,6 +243,7 @@ Failure handling:
 - Non-timeout dependency failure: `503 external_dependency_unavailable`.
 - Fallback is not an exception path; it is a controlled low-confidence retrieval response.
 - Application-level retry/backoff is not implemented yet and remains future production hardening.
+- GitHub Actions runs the test suite and Docker build on pushes and pull requests to `main`.
 
 See [REST API](docs/API.md), [Document Ingestion](docs/INGESTION.md), and [Docker](docs/DOCKER.md).
 

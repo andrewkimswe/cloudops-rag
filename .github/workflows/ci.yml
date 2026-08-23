@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: CI-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Compile and import check
+        run: |
+          python -m compileall -q src scripts tests
+          PYTHONPATH=src python - <<'PY'
+          import cloudops_rag
+          from cloudops_rag.api.app import app
+          from cloudops_rag.api.dependencies import build_api_state
+          from cloudops_rag.api.metrics import HTTP_REQUESTS_TOTAL
+          from cloudops_rag.config.settings import Settings
+          from cloudops_rag.generation.rag_service import RagService
+          from cloudops_rag.ingestion.document_service import DocumentIngestionService
+          from cloudops_rag.retrieval.chroma_store import ChromaVectorStore
+
+          print("compile_import_ok")
+          PY
+
+      - name: Validate evaluation datasets
+        run: python scripts/validate_evaluation.py
+
+      - name: Lightweight secret scan
+        run: |
+          ! git grep -n -E \
+            -e '[s]k-[A-Za-z0-9_-]{20,}' \
+            -e '[O]PENAI_API_KEY=.+' \
+            -e '[A]WS_SECRET_ACCESS_KEY=.+' \
+            -e '[A]WS_ACCESS_KEY_ID=.+' \
+            -e '[B]earer [A-Za-z0-9._-]{20,}' \
+            -e '-----BEGIN .*[P]RIVATE KEY-----'
+
+      - name: Personal path scan
+        run: |
+          ! git grep -n -E '[/]Users/jiwonkim|[/]private/var/folders'
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build -t cloudops-rag:ci .
+
+      - name: Health smoke test
+        env:
+          OPENAI_API_KEY: ci-placeholder-key
+        run: |
+          docker run -d \
+            --name cloudops-rag-ci \
+            -e OPENAI_API_KEY \
+            -p 8000:8000 \
+            cloudops-rag:ci
+
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/health; then
+              docker stop cloudops-rag-ci
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs cloudops-rag-ci
+          docker stop cloudops-rag-ci || true
+          exit 1
