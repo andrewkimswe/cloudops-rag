@@ -21,6 +21,14 @@ from cloudops_rag.ingestion.loader import CorpusDocument
 DocumentStatus = Literal["pending", "processing", "completed", "failed"]
 
 
+class IngestionEmbeddingError(RuntimeError):
+    pass
+
+
+class IngestionIndexingError(RuntimeError):
+    pass
+
+
 class Embedder(Protocol):
     def embed_documents(self, texts: list[str]) -> list[list[float]]: ...
 
@@ -193,15 +201,21 @@ class DocumentIngestionService:
             timings["chunk_ms"] = elapsed_ms(chunk_started)
 
             embedding_started = time.perf_counter()
-            embeddings = self.embedder.embed_documents([chunk.page_content for chunk in chunks])
+            try:
+                embeddings = self.embedder.embed_documents([chunk.page_content for chunk in chunks])
+            except Exception as exc:
+                raise IngestionEmbeddingError("document embedding failed") from exc
             timings["embedding_ms"] = elapsed_ms(embedding_started)
 
             index_started = time.perf_counter()
-            self.vector_store.delete_document_chunks(doc_id)
-            self.vector_store.upsert_chunks_with_embeddings(chunks, embeddings)
-            indexed_count = self.vector_store.count_document_chunks(doc_id)
-            if indexed_count != len(chunks):
-                raise RuntimeError("indexed chunk count did not match generated chunk count")
+            try:
+                self.vector_store.delete_document_chunks(doc_id)
+                self.vector_store.upsert_chunks_with_embeddings(chunks, embeddings)
+                indexed_count = self.vector_store.count_document_chunks(doc_id)
+                if indexed_count != len(chunks):
+                    raise RuntimeError("indexed chunk count did not match generated chunk count")
+            except Exception as exc:
+                raise IngestionIndexingError("document indexing failed") from exc
             timings["index_ms"] = elapsed_ms(index_started)
 
             timings["total_ms"] = sum(timings.values())
@@ -274,6 +288,10 @@ def extract_html_title(html: str) -> str | None:
 
 
 def error_code_for_exception(exc: Exception) -> str:
+    if isinstance(exc, IngestionEmbeddingError):
+        return "embedding_failed"
+    if isinstance(exc, IngestionIndexingError):
+        return "indexing_failed"
     if isinstance(exc, TimeoutError):
         return "fetch_timeout"
     if isinstance(exc, urllib.error.URLError):
@@ -286,7 +304,7 @@ def error_code_for_exception(exc: Exception) -> str:
             return "invalid_url"
         return "parsing_failed"
     if isinstance(exc, RuntimeError):
-        return "indexing_failed"
+        return "ingestion_failed"
     return "ingestion_failed"
 
 
@@ -298,6 +316,7 @@ def safe_error_message(exc: Exception) -> str:
         "invalid_content": "Document content is not supported HTML.",
         "invalid_url": "Document URL is invalid or unsupported.",
         "parsing_failed": "Document parsing or cleaning failed.",
+        "embedding_failed": "Document embedding failed.",
         "indexing_failed": "Document indexing failed.",
         "ingestion_failed": "Document ingestion failed.",
     }

@@ -80,6 +80,7 @@ def bounded_ingestion_failure_reason(error_code: str | None) -> str:
         "invalid_content",
         "invalid_url",
         "parsing_failed",
+        "embedding_failed",
         "indexing_failed",
         "ingestion_failed",
     }

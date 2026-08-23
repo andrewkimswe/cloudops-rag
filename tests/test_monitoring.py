@@ -46,6 +46,22 @@ class FakeEmbedder:
         return [1.0]
 
 
+class FailingEmbedder:
+    def __init__(self, exc: Exception):
+        self.exc = exc
+
+    def embed_query(self, text: str) -> list[float]:
+        raise self.exc
+
+
+class FailingLLM:
+    def __init__(self, exc: Exception):
+        self.exc = exc
+
+    def answer(self, question: str, retrieved_chunks: list[RetrievedChunk]) -> str:
+        raise self.exc
+
+
 class FakeVectorStore:
     def __init__(self, score: float = 0.7):
         self.score = score
@@ -75,6 +91,46 @@ def test_query_metrics_increment_for_answered_request():
 
     assert result.fallback is False
     assert metric_value("cloudops_rag_query_requests_total", {"result": "answered"}) == before_query + 1
+    assert metric_value("cloudops_rag_generation_duration_seconds_count") == before_generation + 1
+
+
+def test_embedding_failure_records_query_error_and_openai_metric():
+    before_query_error = metric_value("cloudops_rag_query_requests_total", {"result": "error"})
+    before_openai_embedding = metric_value("cloudops_rag_openai_failures_total", {"operation": "embedding"})
+
+    service = RagService(
+        vector_store=FakeVectorStore(score=0.7),
+        embedder=FailingEmbedder(RuntimeError("embedding failed")),
+        llm=FakeLLM(),
+        top_k=5,
+        distance_threshold=1.042478,
+    )
+
+    with pytest.raises(RuntimeError):
+        service.query("embedding failure")
+
+    assert metric_value("cloudops_rag_query_requests_total", {"result": "error"}) == before_query_error + 1
+    assert metric_value("cloudops_rag_openai_failures_total", {"operation": "embedding"}) == before_openai_embedding + 1
+
+
+def test_generation_failure_records_query_error_and_openai_metric():
+    before_query_error = metric_value("cloudops_rag_query_requests_total", {"result": "error"})
+    before_openai_generation = metric_value("cloudops_rag_openai_failures_total", {"operation": "generation"})
+    before_generation = metric_value("cloudops_rag_generation_duration_seconds_count")
+
+    service = RagService(
+        vector_store=FakeVectorStore(score=0.7),
+        embedder=FakeEmbedder(),
+        llm=FailingLLM(RuntimeError("generation failed")),
+        top_k=5,
+        distance_threshold=1.042478,
+    )
+
+    with pytest.raises(RuntimeError):
+        service.query("generation failure")
+
+    assert metric_value("cloudops_rag_query_requests_total", {"result": "error"}) == before_query_error + 1
+    assert metric_value("cloudops_rag_openai_failures_total", {"operation": "generation"}) == before_openai_generation + 1
     assert metric_value("cloudops_rag_generation_duration_seconds_count") == before_generation + 1
 
 

@@ -112,3 +112,17 @@ def test_partial_index_failure_marks_failed_and_cleans_chunks(tmp_path):
     assert result.record.error_code == "indexing_failed"
     assert vector_store.count_document_chunks(doc_id) == 0
     assert doc_id in vector_store.deleted
+
+
+def test_embedding_failure_marks_failed_without_indexing(tmp_path):
+    embedder = FakeEmbedder(fail=True)
+    vector_store = FakeVectorStore()
+    service = make_service(tmp_path, vector_store=vector_store, embedder=embedder)
+    result = service.ingest("https://example.com/runtime-probe")
+    doc_id = stable_document_id("https://example.com/runtime-probe")
+
+    assert result.record.status == "failed"
+    assert result.record.error_code == "embedding_failed"
+    assert result.record.message == "Document embedding failed."
+    assert vector_store.count_document_chunks(doc_id) == 0
+    assert doc_id in vector_store.deleted

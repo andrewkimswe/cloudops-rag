@@ -37,9 +37,18 @@ class OpenAILLM:
                 "content": f"Question:\n{question}\n\nOfficial documentation context:\n{context}",
             },
         ]
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=0,
-        )
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0,
+            )
+        except Exception as exc:
+            if is_timeout_error(exc):
+                raise TimeoutError("OpenAI generation request timed out") from exc
+            raise RuntimeError("OpenAI generation request failed") from exc
         return response.choices[0].message.content or ""
+
+
+def is_timeout_error(exc: Exception) -> bool:
+    return exc.__class__.__name__ in {"APITimeoutError", "Timeout", "ReadTimeout", "ConnectTimeout"}

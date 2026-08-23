@@ -23,7 +23,7 @@ router = APIRouter(tags=["query"])
     response_model=QueryResponse,
     summary="Ask a CloudOps troubleshooting question",
     description="Runs the frozen RAG pipeline with threshold fallback. Reject decisions skip LLM generation.",
-    responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+    responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}, 503: {"model": ErrorResponse}, 504: {"model": ErrorResponse}},
 )
 def query(request: QueryRequest, state: Annotated[ApiState, Depends(get_api_state)]) -> QueryResponse:
     started = time.perf_counter()
@@ -32,7 +32,7 @@ def query(request: QueryRequest, state: Annotated[ApiState, Depends(get_api_stat
         result = state.rag_service.query(request.question)
     except TimeoutError as exc:
         logger.exception("query_timeout")
-        raise ApiError(503, "external_dependency_timeout", "Timed out while calling an external dependency.") from exc
+        raise ApiError(504, "external_dependency_timeout", "Timed out while calling an external dependency.") from exc
     except RuntimeError as exc:
         logger.exception("query_dependency_failure")
         raise ApiError(503, "external_dependency_unavailable", "A retrieval or generation dependency is unavailable.") from exc

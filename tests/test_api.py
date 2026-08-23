@@ -45,6 +45,8 @@ class FakeRagService:
 
     def query(self, question: str) -> RagResult:
         self.calls += 1
+        if "timeout" in question:
+            raise TimeoutError("dependency timed out")
         if "fail generation" in question:
             raise RuntimeError("generation failed")
         if "out of scope" in question:
@@ -194,6 +196,13 @@ def test_empty_question_returns_standard_error(monkeypatch):
     response = client.post("/query", json={"question": "   "})
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "invalid_request"
+
+
+def test_query_timeout_returns_timeout_error(monkeypatch):
+    client, _ = make_client(monkeypatch)
+    response = client.post("/query", json={"question": "timeout while embedding"})
+    assert response.status_code == 504
+    assert response.json()["error"]["code"] == "external_dependency_timeout"
 
 
 def test_generation_failure_returns_dependency_error(monkeypatch):

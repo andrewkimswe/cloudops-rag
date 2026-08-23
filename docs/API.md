@@ -217,7 +217,7 @@ Examples:
 - `400 parsing_failed`: parsed document had insufficient text
 - `404 document_not_found`: document status id is unknown
 - `503 external_dependency_unavailable`: retrieval or generation dependency failed
-- `503 external_dependency_timeout`: external dependency timed out
+- `504 external_dependency_timeout`: external dependency timed out
 - `500 internal_error`: unexpected API failure
 
 ## 9. Fallback Behavior

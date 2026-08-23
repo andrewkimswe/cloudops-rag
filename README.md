@@ -569,3 +569,4 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - [Document Ingestion](docs/INGESTION.md)
 - [Docker](docs/DOCKER.md)
 - [Monitoring](docs/MONITORING.md)
+- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)

@@ -56,7 +56,7 @@ Allowed labels include:
 - HTTP status code
 - query result: `answered`, `fallback`, `error`
 - ingestion result: `completed`, `duplicate`, `failed`
-- ingestion failure reason from a bounded error-code set
+- ingestion failure reason from a bounded error-code set such as `fetch_failed`, `invalid_content`, `embedding_failed`, or `indexing_failed`
 - OpenAI operation: `embedding`, `generation`
 
 The service does not use question text, answer text, `doc_id`, `chunk_id`, source URL, document URL, exception message, or user input as metric labels.
