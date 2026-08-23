@@ -2,6 +2,8 @@
 
 [English](./README.md) | **한국어**
 
+[![CI](https://github.com/andrewkimswe/cloudops-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/andrewkimswe/cloudops-rag/actions/workflows/ci.yml)
+
 AWS 및 Kubernetes 공식 트러블슈팅 문서를 대상으로 구축한 evaluation-driven RAG 시스템입니다. 단순히 RAG 파이프라인을 연결하는 데서 끝내지 않고, Retrieval과 Answer Quality를 분리해 측정하고, 실패 사례를 분석한 뒤 개선 가설을 controlled experiment로 검증했습니다.
 
 FastAPI, Docker, Runtime ingestion, Prometheus-compatible monitoring까지 연결해 재현 가능한 서비스 형태로 구성했습니다. 이 README는 한국 기업의 Backend, Infra, Cloud, DevOps, AI/RAG 직무 관점에서 프로젝트의 문제의식, 평가 결과, 한계를 빠르게 이해할 수 있도록 정리한 공개 문서입니다.

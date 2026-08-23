@@ -2,6 +2,8 @@
 
 **English** | [한국어](./README.ko.md)
 
+[![CI](https://github.com/andrewkimswe/cloudops-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/andrewkimswe/cloudops-rag/actions/workflows/ci.yml)
+
 Evaluation-driven RAG for AWS and Kubernetes troubleshooting documentation.
 
 CloudOps RAG is a FastAPI service that answers CloudOps troubleshooting questions with retrieved sources from official AWS and Kubernetes documentation. The project focuses less on making a fluent chatbot and more on measuring whether the system retrieves the right operational evidence, refuses unsupported questions, and exposes its limitations clearly.
