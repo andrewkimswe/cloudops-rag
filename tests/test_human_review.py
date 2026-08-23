@@ -62,20 +62,17 @@ def test_human_review_schema_validation() -> None:
     ]
 
 
-def test_blank_human_fields_are_allowed_and_present() -> None:
+def test_human_fields_are_complete_and_valid() -> None:
     rows = read_csv(HUMAN_REVIEW_PATH)
-    human_fields = [
-        "human_correctness",
-        "human_completeness",
-        "human_faithfulness",
-        "human_source_support",
-        "human_agrees_with_judge",
-        "human_final_failure_type",
-        "human_notes",
-    ]
 
-    assert all(row[field] == "" for row in rows for field in human_fields)
-    assert human_review_complete(rows) is False
+    assert human_review_complete(rows) is True
+    assert sum(row["human_agrees_with_judge"] == "false" for row in rows) == 5
+    assert {row["human_final_failure_type"] for row in rows} == {
+        "no_material_failure",
+        "retrieval_failure",
+        "generation_failure",
+        "combined_failure",
+    }
 
 
 def test_invalid_human_score_rejected() -> None:
@@ -160,3 +157,20 @@ def test_high_priority_cases_are_marked() -> None:
     for eval_id in ["ans_eval_007", "ans_eval_009", "ans_eval_010", "ans_eval_011"]:
         assert rows[eval_id]["review_priority"] == "HIGH"
         assert "explicit_high_priority" in json.loads(rows[eval_id]["priority_reasons"])
+
+
+def test_human_summary_files_are_generated() -> None:
+    summary_path = PROJECT_ROOT / "results" / "answer_evaluation" / "answer_eval_human_summary.json"
+    disagreements_path = PROJECT_ROOT / "results" / "answer_evaluation" / "answer_eval_judge_human_disagreements.csv"
+
+    assert summary_path.exists()
+    assert disagreements_path.exists()
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    disagreements = read_csv(disagreements_path)
+
+    assert summary["status"] == "Human review complete"
+    assert summary["reviewed_rows"] == 11
+    assert summary["remaining_rows"] == 0
+    assert summary["disagreement_count"] == 5
+    assert [row["source_eval_id"] for row in disagreements] == ["eval_003", "eval_012", "eval_026", "eval_027", "eval_046"]

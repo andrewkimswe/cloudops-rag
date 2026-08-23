@@ -1,0 +1,6 @@
+eval_id,source_eval_id,question_type,metric_differences,judge_failure_type,human_final_failure_type,human_notes
+ans_eval_002,eval_003,single-troubleshooting,correctness: judge 2 -> human 1,generation_failure,generation_failure,Correctness 2->1. The answer points to the document but does not provide enough of the substantive answer.
+ans_eval_003,eval_012,single-troubleshooting,completeness: judge 1 -> human 2,generation_failure,no_material_failure,Completeness 1->2. The expected point is sufficiently covered implicitly.
+ans_eval_006,eval_026,discrimination,correctness: judge 1 -> human 0,generation_failure,generation_failure,Correctness 1->0. The answer does not actually make the comparison that is central to the question.
+ans_eval_007,eval_027,discrimination,source_support: judge 1 -> human 0,generation_failure,retrieval_failure,"Source Support 1->0. Stored retrieval returned only k8s_secrets chunks and did not include the expected k8s_configmaps evidence, so the answer was faithful to the wrong/incomplete context but did not support the ConfigMap-focused question."
+ans_eval_011,eval_046,multi-document,faithfulness: judge 2 -> human 1,retrieval_failure,combined_failure,Faithfulness 2->1. The answer pulls in evidence that is not sufficiently relevant to the question.

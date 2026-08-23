@@ -304,3 +304,57 @@ Avoid saying:
 - “Answer accuracy is X%.”
 - “The RAG system is fully correct.”
 - “The judge result is ground truth.”
+
+## Human Verification Results
+
+Human verification has been completed for the 11 generated-answer rows. The human scores were supplied by the reviewer and were not inferred or changed by Codex. The 3 out-of-scope fallback rows remain separately summarized as correct fallback with generation skipped.
+
+Human score distribution over 11 generated answers:
+
+| Metric | Score 2 | Score 1 | Score 0 | Mean |
+|---|---:|---:|---:|---:|
+| Correctness | 6 | 3 | 2 | 1.3636 |
+| Completeness | 4 | 5 | 2 | 1.1818 |
+| Faithfulness | 10 | 1 | 0 | 1.9091 |
+| Source Support | 8 | 2 | 1 | 1.6364 |
+
+Judge-human exact agreement:
+
+| Metric | Exact Agreement | Within-1 Agreement |
+|---|---:|---:|
+| Correctness | 9/11 | 11/11 |
+| Completeness | 10/11 | 11/11 |
+| Faithfulness | 10/11 | 11/11 |
+| Source Support | 10/11 | 11/11 |
+| Overall metric pairs | 39/44 | 44/44 |
+
+Human final failure distribution:
+
+| Failure Type | Count |
+|---|---:|
+| no_material_failure | 4 |
+| retrieval_failure | 1 |
+| generation_failure | 4 |
+| combined_failure | 2 |
+
+Judge-human disagreement cases:
+
+- `eval_003`: Correctness changed from Judge 2 to Human 1 because the answer points to the document but does not provide enough substantive answer content.
+- `eval_012`: Completeness changed from Judge 1 to Human 2 because the expected point was sufficiently covered implicitly.
+- `eval_026`: Correctness changed from Judge 1 to Human 0 because the answer did not make the central comparison required by the question.
+- `eval_027`: Source Support changed from Judge 1 to Human 0 because stored retrieval returned only Secret-centered evidence and did not support the ConfigMap-focused question.
+- `eval_046`: Faithfulness changed from Judge 2 to Human 1 because the answer used evidence that was not sufficiently relevant to the question.
+
+These results should still be described as a small diagnostic evaluation, not as a benchmark. Human verification is preferred over judge output for final diagnostic interpretation, but it is still based on a 14-question subset.
+
+## eval_027 Final Human Interpretation
+
+Stored data for `eval_027` / `ans_eval_007` shows:
+
+- Question: whether application feature flags should be stored in a Secret just because they affect runtime behavior.
+- Expected source: `k8s_configmaps`.
+- Returned sources: only `k8s_secrets`.
+- Retrieved doc ids: five `k8s_secrets` chunks.
+- Required points: use ConfigMaps for non-confidential configuration, do not use Secrets solely because a value affects runtime behavior, reserve Secrets for sensitive data.
+
+Conclusion: the needed ConfigMap evidence was not retrieved. The answer was faithful to the wrong or incomplete context, but it did not support the ConfigMap-focused question. Human final failure type is `retrieval_failure`, not generation-only failure.

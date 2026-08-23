@@ -19,10 +19,11 @@ Implementation -> Measurement -> Experiment -> Configuration Freeze
 - Controlled Development-set experiments for chunking, embedding model, Top-k, and similarity threshold.
 - Frozen retrieval configuration validated once on a 10-question held-out set without retuning.
 - FastAPI service with source-aware answers, threshold fallback, runtime ingestion, Chroma persistence, and Docker packaging.
+- Diagnostic answer-quality evaluation with LLM-as-a-Judge followed by human verification.
 
 ## Key Results
 
-These are retrieval and fallback results, not answer-quality results.
+The retrieval and fallback results below are separate from the small diagnostic answer-quality evaluation that follows.
 
 | Area | Result |
 |---|---:|
@@ -44,6 +45,18 @@ These are retrieval and fallback results, not answer-quality results.
 On the 8 in-scope held-out questions, the frozen configuration retrieved the expected document within Top-3 for 8/8 questions. These held-out results are based on a small 10-question test set and should be interpreted as a validation snapshot, not as a general benchmark.
 
 Both baseline and final configurations achieved configured-cutoff coverage of 8/8 on the held-out set. The final configuration showed a higher MRR (0.9375 vs 0.8333), but the test set is too small to claim a general ranking improvement.
+
+Answer quality was evaluated separately from retrieval on a small 14-question diagnostic subset: 11 generated answers and 3 out-of-scope fallback cases. Generated answers were scored on correctness, completeness, faithfulness, and source support using LLM-as-a-Judge followed by human verification of all 11 generated answers. Across the four answer-quality dimensions, the LLM judge matched human ratings exactly on 39 of 44 score assignments (88.6%); within-1 agreement was 44/44. This is judge-human metric agreement, not answer accuracy.
+
+Human diagnostic scores over the 11 generated answers:
+
+| Answer-quality dimension | Mean score |
+|---|---:|
+| Correctness | 1.3636 / 2 |
+| Completeness | 1.1818 / 2 |
+| Faithfulness | 1.9091 / 2 |
+| Source Support | 1.6364 / 2 |
+
 
 ## What Makes This Different
 
@@ -270,6 +283,10 @@ Document diversity on held-out Top-5:
 
 These results are consistent with the duplicate-chunk hypothesis observed in this corpus and evaluation: multiple chunks from one document can occupy Top-k positions and push a second evidence document out of the context. This is evidence for one plausible cause, not proof of the only cause.
 
+Answer-level diagnostics connected some of these retrieval failures to generated answer quality. On the 11-answer diagnostic subset, human-labeled final failure types were: 4 no-material-failure, 4 generation-failure, 1 retrieval-failure, and 2 combined-failure. In `eval_027`, the system retrieved Secret-centered context for a ConfigMap-focused question; the answer stayed faithful to that wrong or incomplete context, but correctness and source support were poor. This illustrates that high faithfulness does not necessarily imply high correctness.
+
+Missing second-document evidence was not only a retrieval metric issue. In observed diagnostic cases such as `eval_043` and `eval_046`, incomplete retrieval was associated with lower answer completeness and correctness. Conversely, `eval_045` showed that absence of the exact expected source document does not always mean the answer is unsupported when alternative retrieved evidence covers the core answer. Document-level ground truth is useful for retrieval evaluation, but answer-level source support is a separate question.
+
 ## Service Engineering
 
 The evaluated retrieval pipeline is exposed through FastAPI:
@@ -353,9 +370,9 @@ This project is intentionally small and controlled.
 - The corpus is domain-specific to AWS/Kubernetes CloudOps troubleshooting.
 - Tuning was sequential, not a global search across all chunking, embedding, Top-k, and threshold combinations.
 - Chunking experiments used character-based chunking only.
-- Current evaluation is retrieval-focused.
-- Answer correctness, faithfulness, citation correctness, and hallucination rate are not formally evaluated.
-- Retrieving the expected document does not guarantee a correct or faithful generated answer.
+- Retrieval evaluation is more mature than answer evaluation. Answer quality has been evaluated only on a small 14-question diagnostic subset, not as a general benchmark.
+- Claim-level citation correctness and hallucination rate have not been fully evaluated across the corpus.
+- Retrieving the expected document does not guarantee a correct or faithful generated answer, and a source can support an answer even when it is not the exact expected `doc_id`.
 - Multi-document completeness remains weak.
 - ConfigMap/Secrets semantic confusion persists.
 - Runtime corpus expansion can change distance distributions, so the threshold may need recalibration.
@@ -365,8 +382,8 @@ This project is intentionally small and controlled.
 
 Potential next experiments:
 
-- Formal answer-quality evaluation.
-- Citation correctness and faithfulness checks.
+- Expand answer-quality evaluation beyond the current 14-question diagnostic subset.
+- Broader claim-level citation correctness and faithfulness checks.
 - MMR or document-diversity retrieval.
 - Document-level deduplication or per-document chunk caps.
 - Reranking.
@@ -483,10 +500,10 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 | [src/cloudops_rag/](src/cloudops_rag/) | Application package: ingestion, chunking, embedding, retrieval, generation, API, config. |
 | [data/manifests/](data/manifests/) | Official source inventory. |
 | [data/evaluation/](data/evaluation/) | Seed, full, development, and held-out evaluation datasets. |
-| [results/](results/) | Raw experiment outputs and summaries from Phases 7-13 and ingestion benchmarking. |
+| [results/](results/) | Raw experiment outputs and summaries from Phases 7-13, ingestion benchmarking, and answer evaluation diagnostics. |
 | [scripts/](scripts/) | CLI entry points for fetching, indexing, querying, and running evaluations. |
 | [tests/](tests/) | Unit and API tests. |
-| [docs/](docs/) | Detailed decisions, experiments, architecture, API, ingestion, Docker, summary, and limitations. |
+| [docs/](docs/) | Detailed decisions, experiments, architecture, API, ingestion, Docker, evaluation summaries, and limitations. |
 
 ## Technology Stack
 
@@ -515,6 +532,8 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - [Final Configuration](docs/FINAL_CONFIGURATION.md)
 - [Held-out Evaluation](docs/HELDOUT_EVALUATION.md)
 - [Evaluation Summary](docs/EVALUATION_SUMMARY.md)
+- [Answer Evaluation](docs/ANSWER_EVALUATION.md)
+- [Answer Evaluation Human Review](docs/ANSWER_EVALUATION_HUMAN_REVIEW.md)
 - [Limitations](docs/LIMITATIONS.md)
 - [REST API](docs/API.md)
 - [Document Ingestion](docs/INGESTION.md)

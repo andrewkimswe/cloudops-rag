@@ -1,0 +1,70 @@
+{
+  "status": "Human review complete",
+  "reviewed_rows": 11,
+  "remaining_rows": 0,
+  "human_score_distribution": {
+    "correctness": {
+      "score_2_count": 6,
+      "score_1_count": 3,
+      "score_0_count": 2,
+      "mean": 1.3636
+    },
+    "completeness": {
+      "score_2_count": 4,
+      "score_1_count": 5,
+      "score_0_count": 2,
+      "mean": 1.1818
+    },
+    "faithfulness": {
+      "score_2_count": 10,
+      "score_1_count": 1,
+      "score_0_count": 0,
+      "mean": 1.9091
+    },
+    "source_support": {
+      "score_2_count": 8,
+      "score_1_count": 2,
+      "score_0_count": 1,
+      "mean": 1.6364
+    }
+  },
+  "judge_human_agreement": {
+    "judge_correctness": {
+      "exact_agreement_count": 9,
+      "within_1_agreement_count": 11,
+      "total": 11
+    },
+    "judge_completeness": {
+      "exact_agreement_count": 10,
+      "within_1_agreement_count": 11,
+      "total": 11
+    },
+    "judge_faithfulness": {
+      "exact_agreement_count": 10,
+      "within_1_agreement_count": 11,
+      "total": 11
+    },
+    "judge_source_support": {
+      "exact_agreement_count": 10,
+      "within_1_agreement_count": 11,
+      "total": 11
+    }
+  },
+  "overall_exact_agreement": {
+    "exact_metric_matches": 39,
+    "total_metric_pairs": 44,
+    "rate": 0.8864
+  },
+  "overall_within_1_agreement": {
+    "within_1_metric_matches": 44,
+    "total_metric_pairs": 44,
+    "rate": 1.0
+  },
+  "human_failure_distribution": {
+    "generation_failure": 4,
+    "no_material_failure": 4,
+    "retrieval_failure": 1,
+    "combined_failure": 2
+  },
+  "disagreement_count": 5
+}
