@@ -1,438 +1,268 @@
 # CloudOps RAG
 
-An evaluation-driven RAG system for AWS and Kubernetes troubleshooting documentation.
+Evaluation-driven RAG for AWS and Kubernetes troubleshooting documentation.
 
-CloudOps RAG is a document-grounded question-answering service built on official AWS and Kubernetes operational documentation. The project does not stop at "documents -> vector DB -> LLM". It builds a retrieval evaluation dataset, measures retrieval quality, compares chunking, embedding, and Top-k choices, freezes a selected configuration, validates it on a held-out set, analyzes persistent failure modes, and exposes the evaluated pipeline through FastAPI, runtime document ingestion, Chroma persistence, and Docker.
+CloudOps RAG is a FastAPI service that answers CloudOps troubleshooting questions with retrieved sources from official AWS and Kubernetes documentation. The project focuses less on making a fluent chatbot and more on measuring whether the system retrieves the right operational evidence, refuses unsupported questions, and exposes its limitations clearly.
 
-The core engineering story is:
+The project story is:
 
 ```text
-Implementation -> Measurement -> Experiment -> Configuration Freeze
--> Held-out Validation -> Failure Analysis -> Service Engineering
+Built -> Measured -> Compared -> Frozen -> Held-out Validated
+-> Answer Evaluated -> Failure Analyzed -> Improvement Hypothesis Tested
+-> Served -> Monitored
 ```
-
-## Highlights
-
-- 20-document official AWS/Kubernetes CloudOps corpus.
-- 50-question evaluation dataset with Development / Held-out split.
-- Retrieval evaluation with Hit Rate@k, MRR, Multi-document Any-Hit, and Multi-document All-Hit.
-- Controlled Development-set experiments for chunking, embedding model, Top-k, and similarity threshold.
-- Frozen retrieval configuration validated once on a 10-question held-out set without retuning.
-- FastAPI service with source-aware answers, threshold fallback, runtime ingestion, Chroma persistence, and Docker packaging.
-- Diagnostic answer-quality evaluation with LLM-as-a-Judge followed by human verification.
 
 ## Key Results
 
-The retrieval and fallback results below are separate from the small diagnostic answer-quality evaluation that follows.
-
-| Area | Result |
-|---|---:|
-| Corpus | 20 official AWS/Kubernetes documents |
-| Evaluation dataset | 50 questions |
-| Development set | 40 total, 36 in-scope, 4 out-of-scope |
-| Held-out set | 10 total, 8 in-scope, 2 out-of-scope |
-| Frozen chunking | 1024 characters / 128 overlap |
-| Frozen embedding | OpenAI `text-embedding-3-small` |
-| Frozen vector DB | Chroma |
-| Frozen Top-k | 5 |
-| Frozen threshold | Top-1 Chroma L2 distance <= `1.042478` |
-| Held-out Hit@1 | 87.50% (7/8 in-scope) |
-| Held-out Hit@3 | 100.00% (8/8 in-scope) |
-| Held-out Hit@5 | 100.00% (8/8 in-scope) |
-| Held-out MRR | 0.9375 |
-| Held-out threshold result | 8 true accepts, 0 false rejects, 2 true rejects, 0 false accepts |
-
-On the 8 in-scope held-out questions, the frozen configuration retrieved the expected document within Top-3 for 8/8 questions. These held-out results are based on a small 10-question test set and should be interpreted as a validation snapshot, not as a general benchmark.
-
-Both baseline and final configurations achieved configured-cutoff coverage of 8/8 on the held-out set. The final configuration showed a higher MRR (0.9375 vs 0.8333), but the test set is too small to claim a general ranking improvement.
-
-Answer quality was evaluated separately from retrieval on a small 14-question diagnostic subset: 11 generated answers and 3 out-of-scope fallback cases. Generated answers were scored on correctness, completeness, faithfulness, and source support using LLM-as-a-Judge followed by human verification of all 11 generated answers. Across the four answer-quality dimensions, the LLM judge matched human ratings exactly on 39 of 44 score assignments (88.6%); within-1 agreement was 44/44. This is judge-human metric agreement, not answer accuracy.
-
-Human diagnostic scores over the 11 generated answers:
-
-| Answer-quality dimension | Mean score |
-|---|---:|
-| Correctness | 1.3636 / 2 |
-| Completeness | 1.1818 / 2 |
-| Faithfulness | 1.9091 / 2 |
-| Source Support | 1.6364 / 2 |
-
-
-## What Makes This Different
-
-A common RAG tutorial often follows this path:
-
-```text
-Documents -> Vector DB -> LLM -> Answer
-```
-
-This project follows a measurement-first path:
-
-```mermaid
-flowchart LR
-  A["Official AWS/Kubernetes docs"] --> B["RAG baseline"]
-  B --> C["Evaluation dataset"]
-  C --> D["Retrieval metrics"]
-  D --> E["Controlled experiments"]
-  E --> F["Frozen configuration"]
-  F --> G["Held-out validation"]
-  G --> H["Failure analysis"]
-  H --> I["Fallback"]
-  I --> J["FastAPI service"]
-  J --> K["Runtime ingestion"]
-  K --> L["Docker"]
-```
-
-The emphasis is not only that the pipeline can answer questions, but that its retrieval behavior is measured, its configuration choices are explainable, and its limitations are kept visible.
-
-## Architecture
-
-The evaluation collection and runtime collection are intentionally separate. Phase 7-13 experiment results remain tied to the frozen evaluation collection, while the API writes newly registered documents only to the mutable runtime collection.
-
-```mermaid
-flowchart TD
-  subgraph Offline["Evaluation corpus pipeline"]
-    A["Official AWS/Kubernetes Docs"] --> B["Fetch / Parse"]
-    B --> C["Character Chunking"]
-    C --> D["OpenAI Embedding"]
-    D --> E["Chroma Evaluation Collection"]
-  end
-
-  subgraph Query["Query path"]
-    Q["User Query"] --> QE["Query Embedding"]
-    QE --> R["Chroma Retrieval"]
-    R --> T["Top-1 L2 Distance Check"]
-    T -->|distance <= 1.042478| G["Retrieved Context"]
-    G --> L["gpt-4o-mini"]
-    L --> S["Answer + Sources"]
-    T -->|distance > 1.042478| F["Fallback Response, LLM skipped"]
-  end
-
-  subgraph Runtime["Runtime ingestion"]
-    P["POST /documents"] --> RF["Fetch"]
-    RF --> RP["Parse"]
-    RP --> RC["Chunk"]
-    RC --> RE["Embed"]
-    RE --> RV["Runtime Chroma Collection"]
-  end
-
-  E -. "seed when runtime collection is empty" .-> RV
-  RV --> R
-```
-
-See [Architecture](docs/ARCHITECTURE.md) for package boundaries and collection names.
-
-## Evaluation Design
-
-The corpus contains 20 official AWS/Kubernetes CloudOps and troubleshooting documents listed in [data/manifests/documents.csv](data/manifests/documents.csv).
-
-The evaluation dataset contains 50 manually written operational questions:
-
-| Split | Total | In-scope | Out-of-scope |
-|---|---:|---:|---:|
-| Development | 40 | 36 | 4 |
-| Held-out Test | 10 | 8 | 2 |
-| Total | 50 | 44 | 6 |
-
-Question types include `single-troubleshooting`, `single-conceptual`, `contextual`, `discrimination`, `multi-document`, and `out-of-scope`.
-
-Ground truth is labeled by `doc_id`, not `chunk_id`. This keeps labels stable when chunk size and overlap change. A chunk boundary can move across experiments, but the expected source document should remain stable.
-
-Metrics:
-
-- Hit Rate@k: whether an expected document appears within the retrieved cutoff.
-- MRR: how highly the first expected document is ranked.
-- Multi-document Any-Hit: at least one expected document appears.
-- Multi-document All-Hit: all expected documents appear.
-- Threshold accept/reject: whether in-scope questions are accepted and out-of-scope questions are rejected before LLM generation.
-
-The Development set was used for selecting chunking, embedding, Top-k, and threshold. The Held-out Test set was opened only after the configuration was frozen. No retuning was performed after held-out results were observed.
-
-## Experiments
-
-### Chunking
-
-The Phase 7 baseline used `512/0` character chunking, OpenAI `text-embedding-3-small`, Chroma, and `top_k=3`.
-
-Phase 8 selected `1024/128` for later experiments because it improved Top-3 document coverage by one question on the Development set:
-
-| Configuration | Hit@1 | Hit@3 | MRR |
-|---|---:|---:|---:|
-| `512/0` baseline | 80.56% (29/36) | 88.89% (32/36) | 0.8651 |
-| `1024/128` selected | 75.00% (27/36) | 91.67% (33/36) | 0.8408 |
-
-This is a coverage-ranking trade-off. Top-3 coverage increased from 32/36 to 33/36, while Hit@1 and MRR decreased. Since the Development in-scope set has only 36 questions, one question changes Hit Rate by about 2.78 percentage points.
-
-![Chunking trade-off](docs/assets/readme-chunking-tradeoff.svg)
-
-### Embedding
-
-Phase 9 compared OpenAI `text-embedding-3-small` and `sentence-transformers/all-MiniLM-L6-v2` under the selected `1024/128` chunking setup.
-
-| Embedding | Hit@3 | MRR | Mean query embedding latency |
-|---|---:|---:|---:|
-| OpenAI `text-embedding-3-small` | 91.67% (33/36) | 0.8408 | 185.60 ms |
-| MiniLM `all-MiniLM-L6-v2` | 86.11% (31/36) | 0.8314 | 4.71 ms |
-
-OpenAI was selected for the frozen pipeline because retrieval quality was the current priority. MiniLM is still a meaningful engineering option when local execution, offline operation, lower latency, no API key, and no per-query external API cost matter more than the observed Hit@3 difference. Latency is API, network, hardware, and environment dependent.
-
-![Embedding trade-off](docs/assets/readme-embedding-tradeoff.svg)
-
-### Top-k
-
-Phase 10 fixed `1024/128` and OpenAI embeddings, then compared k=1, k=3, and k=5. k=10 was used only as a diagnostic view.
-
-| k | Overall Hit | MRR | Multi Any-Hit | Multi All-Hit | Approx context |
-|---:|---:|---:|---:|---:|---:|
-| 1 | 27/36 | 0.8408 | 5/6 | 0/6 | ~250 tokens |
-| 3 | 33/36 | 0.8408 | 6/6 | 0/6 | ~732 tokens |
-| 5 | 33/36 | 0.8408 | 6/6 | 2/6 | ~1236 tokens |
-| 10 diagnostic | 35/36 | 0.8408 | 6/6 | 3/6 | ~2498 tokens |
-
-k=5 was not selected because it improved overall Hit over k=3. It was selected because it improved multi-document All-Hit from 0/6 to 2/6 while keeping the context size manageable for this RAG v1 service.
-
-The trade-off is larger context and more duplicate chunks. At k=5, the average unique document count was 1.975 and the duplicate ratio was 0.605.
-
-![Top-k trade-off](docs/assets/readme-topk-tradeoff.svg)
-
-### Retrieval Diversification
-
-After observing repeated duplicate-chunk occupancy in multi-document queries, a post-hoc Development-set experiment applied a maximum of two chunks per document while preserving dense similarity order. This experiment was conducted after the original held-out evaluation, so the existing held-out set was not reused to validate the diversified retriever, and cap=2 was not promoted to the frozen configuration.
-
-| Dev metric | Baseline | cap=2 candidate |
-|---|---:|---:|
-| Multi-document All-Hit@5 | 2/6 | 4/6 |
-| Average unique docs | 1.975 | 2.95 |
-| Duplicate ratio | 0.605 | 0.365 |
-| Max same-document occupancy | 5 | 2 |
-| Single-document Hit@5 | 27/30 | 28/30 |
-
-This supports the duplicate-occupancy hypothesis as a partial explanation: when a relevant document is present in the candidate ranking but suppressed by repeated chunks from another document, a document cap can help. It does not solve cases where the relevant document is absent from the raw candidate pool, as seen in `eval_027`; `eval_021` and `eval_046` also remained unresolved.
-
-## Threshold and Fallback
-
-Chroma returned distances for this collection. Lower L2 distance means more similar.
-
-The fallback gate uses the Top-1 retrieved chunk distance:
-
-```text
-top_1_l2_distance <= 1.042478 -> accept and allow LLM generation
-top_1_l2_distance >  1.042478 -> reject, skip LLM, return fallback
-```
-
-The selected threshold is the midpoint between the Development-set max in-scope distance and min out-of-scope distance:
-
-| Development signal | Value |
-|---|---:|
-| Max in-scope distance | 1.0350 |
-| Min out-of-scope distance | 1.0500 |
-| Selected midpoint threshold | 1.042478 |
-
-Development result: 36/36 in-scope accepted and 4/4 out-of-scope rejected.
-
-Held-out result: 8/8 in-scope accepted and 2/2 out-of-scope rejected.
-
-This threshold is corpus-dependent and sample-sensitive. The Development OOS set has only 4 questions, and the Held-out OOS set has only 2. The threshold does not solve semantic misretrieval, multi-document completeness, hallucination, or answer correctness.
-
-## Held-out Evaluation
-
-After chunking, embedding, Top-k, and threshold were selected on the Development set, the frozen configuration was evaluated once on the Held-out Test set.
-
-Frozen configuration:
+The frozen configuration is:
 
 ```text
 chunk_size = 1024
 chunk_overlap = 128
 chunk_unit = character
-embedding_model = OpenAI text-embedding-3-small
-vector_db = Chroma
+embedding = OpenAI text-embedding-3-small
+vector DB = Chroma
 retrieval_top_k = 5
-threshold = 1.042478
-llm = gpt-4o-mini
+threshold = top-1 Chroma L2 distance <= 1.042478
+generation model = gpt-4o-mini
 ```
 
-Held-out retrieval on 8 in-scope questions:
+Retrieval evaluation measures whether expected source documents were retrieved. Answer evaluation is separate and measures whether generated answers were correct, complete, faithful, and source-supported.
 
-| Metric | Result |
+| Area | Result |
+|---|---|
+| Corpus | 20 official AWS/Kubernetes troubleshooting documents |
+| Retrieval dataset | 50 manually written questions |
+| Development split | 40 total: 36 in-scope, 4 out-of-scope |
+| Held-out split | 10 total: 8 in-scope, 2 out-of-scope |
+| Dev retrieval | Hit@3 = 33/36 in-scope |
+| Held-out retrieval | Hit@1 = 7/8, Hit@3 = 8/8, MRR = 0.9375 |
+| Dev threshold/fallback | 36/36 in-scope accepted, 4/4 out-of-scope rejected |
+| Held-out threshold/fallback | 8/8 in-scope accepted, 2/2 out-of-scope rejected |
+| Answer diagnostic | 14 questions: 11 generated answers, 3 fallback cases |
+| Human answer means | Correctness 1.36/2, Completeness 1.18/2, Faithfulness 1.91/2, Source Support 1.64/2 |
+| Judge-human agreement | 39/44 exact, 44/44 within one point |
+
+On the 8 in-scope held-out questions, the frozen configuration retrieved the expected document within Top-3 for 8/8 questions. The held-out set is intentionally small, so this should be read as a validation snapshot, not a broad benchmark.
+
+## Why This Project
+
+Cloud troubleshooting is different from open-ended chat. In AWS and Kubernetes operations, a useful assistant should find the relevant official document, avoid answering when evidence is weak, and handle cases where multiple documents are needed together.
+
+For that reason, this project evaluates the RAG system in layers:
+
+- Retrieval quality: did the expected evidence document appear?
+- Threshold/fallback: did unsupported questions skip generation?
+- Answer quality: did the generated answer use retrieved evidence correctly?
+- Failure analysis: where did retrieval or generation break down?
+- Service engineering: can the evaluated pipeline be served, ingested into, containerized, and monitored?
+
+This is the main distinction from a simple RAG tutorial. The project is designed around measurement and failure analysis, not only around connecting documents to an LLM.
+
+## Architecture
+
+Evaluation and runtime collections are intentionally separate. Experiment results stay tied to the frozen evaluation collection, while runtime document registration writes to a mutable runtime collection.
+
+```mermaid
+flowchart TD
+  User["User"] --> API["FastAPI"]
+  API --> QueryEmbed["OpenAI query embedding"]
+  QueryEmbed --> Retrieval["Chroma retrieval<br/>runtime collection"]
+  Retrieval --> Threshold{"Top-1 L2 <= 1.042478?"}
+  Threshold -->|Accept| LLM["gpt-4o-mini"]
+  LLM --> Answer["Answer + Sources"]
+  Threshold -->|Reject| Fallback["Fallback response<br/>LLM skipped"]
+
+  subgraph RuntimeIngestion["Runtime ingestion"]
+    URL["URL"] --> Fetch["Fetch"]
+    Fetch --> Parse["Parse"]
+    Parse --> Chunk["Character chunk<br/>1024 / 128"]
+    Chunk --> Embed["OpenAI document embedding"]
+    Embed --> RuntimeChroma["Runtime Chroma collection"]
+  end
+
+  subgraph EvaluationPipeline["Offline evaluation pipeline"]
+    Corpus["Official AWS/Kubernetes docs"] --> EvalChunk["Frozen chunking"]
+    EvalChunk --> EvalEmbed["Frozen embeddings"]
+    EvalEmbed --> EvalChroma["Evaluation Chroma collection"]
+    EvalSet["Dev / Held-out CSV labels"] --> Metrics["Hit@k / MRR / Any-Hit / All-Hit"]
+  end
+
+  RuntimeChroma --> Retrieval
+  EvalChroma -. "seed runtime collection when empty" .-> RuntimeChroma
+```
+
+See [Architecture](docs/ARCHITECTURE.md), [REST API](docs/API.md), and [Document Ingestion](docs/INGESTION.md) for implementation details.
+
+## Evaluation Methodology
+
+The retrieval dataset contains 50 manually written CloudOps questions over 20 official documents.
+
+| Split | Total | In-scope | Out-of-scope | Use |
+|---|---:|---:|---:|---|
+| Development | 40 | 36 | 4 | Chunking, embedding, Top-k, and threshold selection |
+| Held-out Test | 10 | 8 | 2 | One-time validation after freezing |
+
+Ground truth uses expected document IDs, not chunk IDs, because chunk boundaries change when chunk size and overlap change.
+
+Retrieval metrics:
+
+- Hit@k: whether an expected document appears within rank k.
+- MRR: how highly the first expected document is ranked within the stated evaluation depth.
+- Multi Any-Hit: at least one expected document appears.
+- Multi All-Hit: all expected documents appear.
+- Threshold acceptance/rejection: whether in-scope questions are accepted and out-of-scope questions are rejected before generation.
+
+Answer quality was evaluated separately on a 14-question diagnostic subset. It is not mixed with retrieval Hit@k. Retrieval asks, "Did we find the expected evidence?" Answer evaluation asks, "Did the system use retrieved evidence to produce a correct, complete, grounded answer?"
+
+See [Evaluation Summary](docs/EVALUATION_SUMMARY.md), [Held-out Evaluation](docs/HELDOUT_EVALUATION.md), [Answer Evaluation](docs/ANSWER_EVALUATION.md), and [Answer Evaluation Human Review](docs/ANSWER_EVALUATION_HUMAN_REVIEW.md).
+
+## Experiment Summary
+
+The Development set was used to compare the main retrieval choices, then the selected configuration was frozen before Held-out Test evaluation.
+
+| Step | Decision | Evidence |
+|---|---|---|
+| Chunking | `1024/128` character chunks | Dev Hit@3 improved from 32/36 to 33/36 versus `512/0`, while Hit@1 and MRR decreased |
+| Embedding | OpenAI `text-embedding-3-small` | Dev Hit@3 = 33/36 versus 31/36 for local MiniLM under the selected chunking |
+| Top-k | `k=5` | Overall Hit matched k=3, but Dev Multi All-Hit improved from 0/6 to 2/6 |
+| Threshold | L2 midpoint `1.042478` | Dev accepted 36/36 in-scope and rejected 4/4 out-of-scope |
+
+These are small-sample engineering decisions, not universal claims. Detailed experiment notes are in [Chunking Experiments](docs/CHUNKING_EXPERIMENTS.md), [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md), [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md), [Threshold Experiments](docs/THRESHOLD_EXPERIMENTS.md), and [Final Configuration](docs/FINAL_CONFIGURATION.md).
+
+MRR values in this repository are reported with their evaluation scope. The final audit explains why raw-depth-10 MRR and final-Top-5-only MRR should not be compared as the same metric definition. See [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md).
+
+## Threshold And Fallback
+
+The service uses a simple distance gate before generation:
+
+```text
+top_1_l2_distance <= 1.042478 -> accept, call gpt-4o-mini
+top_1_l2_distance >  1.042478 -> reject, return fallback, skip LLM
+```
+
+This separates controlled fallback from external dependency failure. Fallback is a successful response when retrieval confidence is too low. OpenAI timeout or dependency failure is an API error path.
+
+The threshold worked on the small Dev and Held-out OOS samples, but it does not solve high-confidence semantic misretrieval. For example, a ConfigMap-focused question can still retrieve high-confidence Secrets context.
+
+## Answer Evaluation
+
+The diagnostic answer evaluation used 14 questions:
+
+- 11 generated answers.
+- 3 fallback cases.
+- Human verification for all 11 generated answers.
+- LLM-as-a-Judge agreement checked against human scores.
+
+Human mean scores over 11 generated answers:
+
+| Dimension | Mean |
 |---|---:|
-| Hit@1 | 87.50% (7/8) |
-| Hit@3 | 100.00% (8/8) |
-| Hit@5 | 100.00% (8/8) |
-| MRR | 0.9375 |
+| Correctness | 1.36 / 2 |
+| Completeness | 1.18 / 2 |
+| Faithfulness | 1.91 / 2 |
+| Source Support | 1.64 / 2 |
 
-Single-document held-out questions worked well in this small set: 5/5 succeeded at all cutoffs. Multi-document retrieval remained weak: Any-Hit@5 was 3/3, but All-Hit@5 was 0/3.
+The most important lesson was that faithfulness is not the same as correctness. In `eval_027`, the system retrieved Secrets-focused context for a ConfigMap question. The answer stayed grounded in the retrieved context, but the retrieved context did not answer the actual question well, so correctness and source support were poor.
+
+`eval_045` showed a different nuance: the exact expected document was not retrieved, but another Auto Scaling document contained enough evidence to support the answer. This is why document-level retrieval metrics and answer-level source support are related but not identical.
 
 ## Failure Analysis
 
-The most important unresolved issue is multi-document completeness.
+The strongest unresolved weakness is multi-document completeness.
 
-Development:
+| Split | Multi Any-Hit@5 | Multi All-Hit@5 |
+|---|---:|---:|
+| Development | 6/6 | 2/6 |
+| Held-out | 3/3 | 0/3 |
 
-- Multi Any-Hit@5 = 6/6
-- Multi All-Hit@5 = 2/6
+The system often retrieves one relevant document, but does not reliably retrieve every required evidence document for questions that need multiple sources.
 
-Held-out:
+Observed pattern:
 
-- Multi Any-Hit@5 = 3/3
-- Multi All-Hit@5 = 0/3
+- Top-k results often contain repeated chunks from one document.
+- Held-out Top-5 average unique document count was 2.10.
+- Held-out Top-5 average duplicate chunk count was 2.90.
+- Held-out duplicate ratio was 0.58.
 
-The retriever often finds one relevant document but does not reliably retrieve every required evidence document for multi-document CloudOps questions.
+This supports the duplicate-occupancy hypothesis as one likely factor, not the only cause. Semantic confusion also remains visible, especially ConfigMap/Secrets cases.
 
-Observed held-out failures:
+## Diversification Candidate
 
-| Case | Observed behavior |
-|---|---|
-| ConfigMaps + Secrets | Secrets chunks dominated Top-5; ConfigMaps was missing. |
-| ALB + Auto Scaling | ALB appeared, but the Auto Scaling health-check document was ranked too low. |
-| RDS + VPC Reachability | RDS dominated Top-5; Reachability Analyzer was missing. |
+After the frozen held-out evaluation, a post-hoc Development-set experiment applied a per-document chunk cap of 2 while preserving dense similarity order.
 
-Document diversity on held-out Top-5:
+| Dev metric | Baseline | cap=2 candidate |
+|---|---:|---:|
+| Multi All-Hit@5 | 2/6 | 4/6 |
+| Average unique documents | 1.975 | 2.95 |
+| Duplicate ratio | 0.605 | 0.365 |
 
-| Metric | Value |
-|---|---:|
-| Average unique doc count | 2.10 |
-| Average duplicate chunk count | 2.90 |
-| Average duplicate ratio | 0.58 |
-| Max same-document occupancy | 5 |
+This supported the duplicate-occupancy hypothesis as a promising direction. In `eval_007`, Secrets chunks occupied the Top-5 baseline, and cap=2 allowed the ConfigMap document to enter the Top-5.
 
-These results are consistent with the duplicate-chunk hypothesis observed in this corpus and evaluation: multiple chunks from one document can occupy Top-k positions and push a second evidence document out of the context. This is evidence for one plausible cause, not proof of the only cause.
+The cap=2 retriever is not part of the frozen configuration. It was tested post-hoc on the Development set only and was not validated on a new untouched held-out set. It also cannot fix cases where the relevant document is absent from the raw candidate pool, such as `eval_027`.
 
-Answer-level diagnostics connected some of these retrieval failures to generated answer quality. On the 11-answer diagnostic subset, human-labeled final failure types were: 4 no-material-failure, 4 generation-failure, 1 retrieval-failure, and 2 combined-failure. In `eval_027`, the system retrieved Secret-centered context for a ConfigMap-focused question; the answer stayed faithful to that wrong or incomplete context, but correctness and source support were poor. This illustrates that high faithfulness does not necessarily imply high correctness.
-
-Missing second-document evidence was not only a retrieval metric issue. In observed diagnostic cases such as `eval_043` and `eval_046`, incomplete retrieval was associated with lower answer completeness and correctness. Conversely, `eval_045` showed that absence of the exact expected source document does not always mean the answer is unsupported when alternative retrieved evidence covers the core answer. Document-level ground truth is useful for retrieval evaluation, but answer-level source support is a separate question.
+See [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md).
 
 ## Service Engineering
 
-The evaluated retrieval pipeline is exposed through FastAPI:
+Implemented API surface:
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /health` | Check API and Chroma collection availability without calling OpenAI. |
-| `GET /metrics` | Expose Prometheus-compatible service metrics without calling OpenAI or Chroma. |
-| `POST /query` | Run retrieval, threshold fallback, generation, and source return. |
-| `POST /documents` | Synchronously fetch, parse, chunk, embed, and index one runtime document. |
-| `GET /documents/{id}/status` | Return persisted runtime ingestion status. |
+| `GET /health` | Health check without calling OpenAI |
+| `GET /metrics` | Prometheus-compatible metrics |
+| `POST /query` | Retrieval, threshold fallback, generation, answer, sources |
+| `POST /documents` | Synchronous runtime document ingestion |
+| `GET /documents/{id}/status` | Runtime ingestion status |
 
-Service behavior:
+Runtime ingestion:
 
-- Returns `answer`, `sources`, and `fallback`.
-- Skips the LLM call when the threshold rejects a query.
-- Keeps route handlers thin and service logic testable.
-- Uses a runtime Chroma collection separate from the frozen evaluation collection.
-- Seeds the runtime collection from the evaluation collection when empty.
-- Persists runtime document status in local JSON.
+```text
+URL -> Fetch -> Parse -> Chunk -> Embed -> Runtime Chroma
+```
 
-See [REST API](docs/API.md) for request/response contracts.
+Engineering choices:
+
+- Stable URL-based runtime document IDs.
+- Duplicate URL handling without appending duplicate chunks.
+- Evaluation collection separated from runtime collection.
+- Synchronous ingestion for portfolio-scale simplicity.
+- Docker runtime with non-root user, healthcheck, and bind-mount persistence.
+- `.env` secrets are not baked into the image.
+
+Failure handling:
+
+- Embedding timeout: 30s.
+- Generation timeout: 45s.
+- Timeout response: `504 external_dependency_timeout`.
+- Non-timeout dependency failure: `503 external_dependency_unavailable`.
+- Fallback is not an exception path; it is a controlled low-confidence retrieval response.
+- Application-level retry/backoff is not implemented yet and remains future production hardening.
+
+See [REST API](docs/API.md), [Document Ingestion](docs/INGESTION.md), and [Docker](docs/DOCKER.md).
 
 ## Monitoring
 
-Phase 18 adds Prometheus-compatible application metrics at:
+The service exposes Prometheus-compatible metrics at:
 
 ```text
 GET /metrics
 ```
 
-The endpoint exposes bounded-label metrics for HTTP requests, query lifecycle latency, fallback decisions, OpenAI dependency failures, and runtime ingestion outcomes. Metric labels intentionally avoid question text, answer text, document URLs, `doc_id`, `chunk_id`, exception messages, and other high-cardinality user input.
+Metric coverage includes HTTP latency, query latency, embedding latency, retrieval latency, generation latency, fallback count, ingestion metrics, and OpenAI failure metrics. Labels avoid high-cardinality user content such as question text, answers, document URLs, `doc_id`, `chunk_id`, and raw exception messages.
 
-The Docker health check remains `GET /health`; `/metrics` is for scraping and smoke validation. Phase 18 does not add a Prometheus server, Grafana, OpenTelemetry, alerting, authentication, or Kubernetes manifests.
-
-See [Monitoring](docs/MONITORING.md) for metric names and label policy.
-
-## Runtime Document Ingestion
-
-Runtime ingestion is intentionally synchronous for the current project scale:
-
-```text
-URL -> fetch -> parse -> chunk -> embed -> runtime Chroma -> completed
-```
-
-Status lifecycle:
-
-```text
-pending -> processing -> completed
-failed
-```
-
-Duplicate policy:
-
-- Runtime `doc_id` is stable: `registered_<sha1(source_url)[:12]>`.
-- A completed duplicate URL returns the existing record with `duplicate=true`.
-- Duplicate chunks are not appended.
-
-Measured local ingestion examples completed in about 0.82s to 4.30s:
-
-| Document | Processed chars | Chunks | Total time |
-|---|---:|---:|---:|
-| Kubernetes debug cluster | 20,083 | 23 | 4,300.14 ms |
-| Kubernetes DNS debugging | 13,359 | 15 | 2,538.71 ms |
-| AWS EKS troubleshooting | 54,536 | 61 | 821.49 ms |
-
-For this portfolio-scale API, synchronous ingestion keeps behavior explainable. Large documents, concurrent ingestion, retry queues, or timeout-sensitive clients would justify a background worker later.
-
-See [Document Ingestion](docs/INGESTION.md) for lifecycle and failure handling.
-
-## Docker
-
-The service is packaged with Docker:
-
-- Base image: `python:3.12.14-slim-bookworm`.
-- Runtime user: non-root `appuser`.
-- Health check: Python stdlib request to `GET /health`.
-- Secrets: `.env` is excluded from the image and injected at runtime.
-- Persistence: bind mounts for `/app/indexes/chroma` and `/app/data/runtime`.
-- Runtime image excludes local indexes, raw documents, processed documents, runtime status, experiment results, and optional local embedding dependencies.
-
-Observed image size after Phase 17 verification was about 1.06GB. This is a current limitation and a future optimization target, not a benefit.
-
-See [Docker](docs/DOCKER.md) for build, run, persistence, and smoke-test details.
-
-## Limitations
-
-This project is intentionally small and controlled.
-
-- Corpus size: 20 documents.
-- Evaluation size: 50 questions.
-- Held-out size: 10 questions, with only 8 in-scope and 2 out-of-scope.
-- One held-out in-scope question changes percentages by 12.5 percentage points.
-- One held-out out-of-scope question changes rejection rate by 50 percentage points.
-- Evaluation questions and labels are manual.
-- The corpus is domain-specific to AWS/Kubernetes CloudOps troubleshooting.
-- Tuning was sequential, not a global search across all chunking, embedding, Top-k, and threshold combinations.
-- Chunking experiments used character-based chunking only.
-- Retrieval evaluation is more mature than answer evaluation. Answer quality has been evaluated only on a small 14-question diagnostic subset, not as a general benchmark.
-- Claim-level citation correctness and hallucination rate have not been fully evaluated across the corpus.
-- Retrieving the expected document does not guarantee a correct or faithful generated answer, and a source can support an answer even when it is not the exact expected `doc_id`.
-- Multi-document completeness remains weak.
-- ConfigMap/Secrets semantic confusion persists.
-- Runtime corpus expansion can change distance distributions, so the threshold may need recalibration.
-- Docker image size is about 1.06GB.
-
-## Future Work
-
-Potential next experiments:
-
-- Expand answer-quality evaluation beyond the current 14-question diagnostic subset.
-- Broader claim-level citation correctness and faithfulness checks.
-- Treat per-document cap=2 as a promising post-hoc retrieval diversification candidate, not the frozen configuration.
-- Compare against MMR or other document-diversity retrieval methods if a future scope opens that work.
-- Reranking.
-- Hybrid BM25 + dense retrieval.
-- Metadata-aware retrieval.
-- Query rewriting for multi-intent troubleshooting questions.
-- Token-based, section-aware, or semantic chunking.
-- Larger AWS/Kubernetes corpus and larger held-out evaluation set.
-- Prometheus server, Grafana dashboards, alerts, and OpenTelemetry tracing.
+See [Monitoring](docs/MONITORING.md).
 
 ## Quick Start
 
+Use Python 3.12 for reproducing the current runtime and Docker path.
+
 ### Local Python
 
-Use Python 3.12 when reproducing the current runtime and Docker path.
-
 ```bash
-git clone <repository-url>
-cd <repository-directory>
-python3.12 -m venv .venv312  # use your local Python 3.12 launcher
+git clone https://github.com/andrewkimswe/cloudops-rag.git
+cd cloudops-rag
+python3.12 -m venv .venv312
 source .venv312/bin/activate
 python -m pip install --upgrade pip
 python -m pip install ".[dev]"
@@ -454,10 +284,11 @@ Run the API:
 PYTHONPATH=src uvicorn cloudops_rag.api.app:app --reload
 ```
 
-Check health:
+Smoke check:
 
 ```bash
 curl http://localhost:8000/health
+curl http://localhost:8000/metrics
 ```
 
 Query:
@@ -487,8 +318,6 @@ docker run --rm \
 ```
 
 ## API Example
-
-Request:
 
 ```http
 POST /query
@@ -526,13 +355,13 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 
 | Path | Role |
 |---|---|
-| [src/cloudops_rag/](src/cloudops_rag/) | Application package: ingestion, chunking, embedding, retrieval, generation, API, config. |
-| [data/manifests/](data/manifests/) | Official source inventory. |
-| [data/evaluation/](data/evaluation/) | Seed, full, development, and held-out evaluation datasets. |
-| [results/](results/) | Raw experiment outputs and summaries from Phases 7-13, ingestion benchmarking, and answer evaluation diagnostics. |
-| [scripts/](scripts/) | CLI entry points for fetching, indexing, querying, and running evaluations. |
-| [tests/](tests/) | Unit and API tests. |
-| [docs/](docs/) | Detailed decisions, experiments, architecture, API, ingestion, Docker, evaluation summaries, and limitations. |
+| [src/cloudops_rag/](src/cloudops_rag/) | Application package: ingestion, chunking, embedding, retrieval, generation, API, config |
+| [data/manifests/](data/manifests/) | Official source inventory |
+| [data/evaluation/](data/evaluation/) | Retrieval evaluation datasets |
+| [results/](results/) | Raw experiment outputs and summaries |
+| [scripts/](scripts/) | CLI entry points for fetching, indexing, querying, and evaluations |
+| [tests/](tests/) | Unit, API, and monitoring tests |
+| [docs/](docs/) | Detailed decisions, experiments, service docs, and audit notes |
 
 ## Technology Stack
 
@@ -547,26 +376,59 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - pandas and numpy for evaluation/result analysis.
 - pytest and httpx for tests.
 - Docker for reproducible service runtime.
+- Prometheus client for application metrics.
+
+## Limitations
+
+- Corpus is small: 20 official documents.
+- Retrieval dataset is small: 50 questions.
+- Held-out Test is very small: 10 questions, with 8 in-scope and 2 out-of-scope.
+- OOS evaluation is especially sample-sensitive.
+- Evaluation questions and labels were manually constructed.
+- Corpus is specific to AWS/Kubernetes CloudOps troubleshooting.
+- Tuning was sequential, not a global search across all combinations.
+- Chunking experiments used character-based chunking only.
+- Multi-document retrieval completeness remains weak.
+- ConfigMap/Secrets semantic confusion persists.
+- Answer evaluation is diagnostic-scale, not a broad answer-quality benchmark.
+- LLM-as-a-Judge results were human-checked, but still cover only 11 generated answers.
+- Threshold fallback does not prevent high-confidence semantic misretrieval.
+- No production retry/backoff layer yet.
+- The cap=2 diversification candidate has not been validated on a new untouched held-out set.
+- Docker image size is still large, about 1.06GB in the latest observed verification.
+
+## Future Work
+
+1. Expand the corpus and retrieval evaluation set.
+2. Create a new untouched validation set for retrieval diversification.
+3. Compare MMR, reranking, and hybrid retrieval.
+4. Add query rewriting for multi-intent troubleshooting questions.
+5. Use metadata-aware retrieval for provider/category/source filtering.
+6. Improve multi-document evidence retrieval.
+7. Add bounded retry/backoff for retryable external failures.
+8. Expand answer-quality evaluation beyond the current diagnostic subset.
+9. Explore token-based, section-aware, or semantic chunking.
+10. Reduce Docker image size.
 
 ## Detailed Documentation
 
+- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)
+- [Portfolio Summary](docs/PORTFOLIO_SUMMARY.md)
 - [Technical Decisions](docs/DECISIONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [RAG v1](docs/RAG_V1.md)
-- [Experiment Interpretation](docs/EXPERIMENT_INTERPRETATION.md)
-- [Chunking Experiments](docs/CHUNKING_EXPERIMENTS.md)
-- [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md)
-- [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md)
-- [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md)
-- [Threshold Experiments](docs/THRESHOLD_EXPERIMENTS.md)
 - [Final Configuration](docs/FINAL_CONFIGURATION.md)
-- [Held-out Evaluation](docs/HELDOUT_EVALUATION.md)
 - [Evaluation Summary](docs/EVALUATION_SUMMARY.md)
+- [Held-out Evaluation](docs/HELDOUT_EVALUATION.md)
+- [Threshold Experiments](docs/THRESHOLD_EXPERIMENTS.md)
 - [Answer Evaluation](docs/ANSWER_EVALUATION.md)
 - [Answer Evaluation Human Review](docs/ANSWER_EVALUATION_HUMAN_REVIEW.md)
-- [Limitations](docs/LIMITATIONS.md)
+- [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md)
 - [REST API](docs/API.md)
 - [Document Ingestion](docs/INGESTION.md)
 - [Docker](docs/DOCKER.md)
 - [Monitoring](docs/MONITORING.md)
-- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)
+- [Experiment Interpretation](docs/EXPERIMENT_INTERPRETATION.md)
+- [Chunking Experiments](docs/CHUNKING_EXPERIMENTS.md)
+- [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md)
+- [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md)
+- [Limitations](docs/LIMITATIONS.md)
