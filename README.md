@@ -49,6 +49,26 @@ Retrieval evaluation measures whether expected source documents were retrieved. 
 
 On the 8 in-scope held-out questions, the frozen configuration retrieved the expected document within Top-3 for 8/8 questions. The held-out set is intentionally small, so this should be read as a validation snapshot, not a broad benchmark.
 
+## Demo
+
+### Grounded CloudOps Query
+
+An in-scope Kubernetes troubleshooting query returns an answer with official documentation sources.
+
+![Grounded CloudOps query showing answer and sources](docs/assets/demo-grounded-query.png)
+
+### Out-of-Scope Fallback
+
+An out-of-scope query is rejected by the similarity threshold and skips LLM generation.
+
+![Out-of-scope fallback response showing no sources](docs/assets/demo-fallback.png)
+
+### Service Metrics
+
+Prometheus-compatible metrics expose query, retrieval, generation, fallback, retry, and ingestion behavior.
+
+![CloudOps RAG Prometheus metrics](docs/assets/demo-metrics.png)
+
 ## Why This Project
 
 Cloud troubleshooting is different from open-ended chat. In AWS and Kubernetes operations, a useful assistant should find the relevant official document, avoid answering when evidence is weak, and handle cases where multiple documents are needed together.

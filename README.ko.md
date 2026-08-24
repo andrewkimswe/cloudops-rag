@@ -49,6 +49,26 @@ Post-hoc per-document cap=2 실험은 Frozen Configuration에 포함하지 않�
 
 Frozen configuration은 held-out의 8개 in-scope 질문에서 모두 expected document를 Top-3 안에 포함했습니다. 다만 Held-out Test는 10문항뿐이며, 이 결과는 넓은 benchmark가 아니라 작은 검증 snapshot으로 해석해야 합니다.
 
+## 데모
+
+### 공식 문서 기반 CloudOps Query
+
+Kubernetes 트러블슈팅 질문에 대해 공식 문서 기반 답변과 source를 반환합니다.
+
+![공식 문서 기반 CloudOps query와 source 응답](docs/assets/demo-grounded-query.png)
+
+### Out-of-Scope Fallback
+
+범위 밖 질문은 similarity threshold에서 거절되며 LLM generation을 건너뜁니다.
+
+![Out-of-scope fallback 응답과 빈 sources](docs/assets/demo-fallback.png)
+
+### Service Metrics
+
+Prometheus-compatible metrics로 query, retrieval, generation, fallback, retry, ingestion 흐름을 관찰합니다.
+
+![CloudOps RAG Prometheus metrics](docs/assets/demo-metrics.png)
+
 ## 왜 만들었는가
 
 기존 AWS/Kubernetes 기반 프로젝트를 수행하면서, 장애 상황에서는 공식 문서를 찾아 원인을 좁히는 과정이 반복적으로 필요했습니다. CloudOps troubleshooting에서는 LLM이 자연스러운 답변을 만드는 것보다, 관련 공식 문서를 실제로 찾았는지와 근거가 부족할 때 답변을 제한하는지가 더 중요하다고 판단했습니다.
