@@ -85,6 +85,31 @@ embedding -> retrieval -> threshold decision -> generation when accepted
 
 If threshold fallback rejects the query, generation is skipped and `cloudops_rag_generation_duration_seconds` is not observed for that request.
 
+## Monitoring Budget
+
+The current metric set is intentionally small. Each metric should answer a concrete operating question without exposing high-cardinality user content.
+
+| Signal | Metric | Why it matters |
+|---|---|---|
+| Query volume and result mix | `cloudops_rag_query_requests_total{result}` | Shows answered, fallback, and error balance |
+| End-to-end query latency | `cloudops_rag_query_duration_seconds` | Tracks user-visible synchronous request cost |
+| Embedding latency | `cloudops_rag_embedding_duration_seconds` | Isolates query embedding as an external dependency cost |
+| Retrieval latency | `cloudops_rag_retrieval_duration_seconds` | Separates Chroma/vector search latency from OpenAI latency |
+| Generation latency | `cloudops_rag_generation_duration_seconds` | Tracks accepted-query LLM generation cost |
+| Fallback count/rate | `cloudops_rag_fallback_total` | Detects corpus mismatch, threshold drift, or unsupported query mix |
+| OpenAI final failures | `cloudops_rag_openai_failures_total{operation}` | Tracks dependency failures that remain after retry policy |
+| OpenAI retry attempts | `cloudops_rag_external_retries_total{operation,reason}` | Shows transient dependency pressure before it becomes final failure |
+| Ingestion success/failure | `cloudops_rag_ingestion_requests_total{result}` and `cloudops_rag_ingestion_failures_total{reason}` | Tracks runtime corpus update health |
+
+Operational ratios can be derived outside the app:
+
+- fallback rate = fallback queries / total queries
+- OpenAI error rate = OpenAI final failures / query or ingestion volume
+- retry pressure = retry attempts / OpenAI operations
+- ingestion failure rate = failed ingestion requests / ingestion requests
+
+The service intentionally avoids labels for question text, answer text, document URL, `doc_id`, `chunk_id`, raw exception messages, API keys, or local paths.
+
 ## Docker
 
 The Docker image exposes the same endpoint:

@@ -1,0 +1,47 @@
+{
+  "name": "CloudOps RAG frozen evaluation regression baseline",
+  "purpose": "Guard committed frozen retrieval and threshold evaluation artifacts from accidental quality regressions.",
+  "frozen_configuration": {
+    "chunk_size": 1024,
+    "chunk_overlap": 128,
+    "chunk_unit": "character",
+    "embedding_model": "text-embedding-3-small",
+    "vector_db": "Chroma",
+    "retrieval_top_k": 5,
+    "threshold": 1.042478
+  },
+  "fail_gates": {
+    "dev_hit_at_3": {
+      "minimum_numerator": 33,
+      "denominator": 36,
+      "source": "results/top_k/top_k_summary.json"
+    },
+    "heldout_hit_at_3": {
+      "minimum_numerator": 8,
+      "denominator": 8,
+      "source": "results/heldout/heldout_summary.json"
+    },
+    "dev_oos_reject": {
+      "minimum_numerator": 4,
+      "denominator": 4,
+      "source": "results/threshold/threshold_summary.json"
+    },
+    "heldout_oos_reject": {
+      "minimum_numerator": 2,
+      "denominator": 2,
+      "source": "results/heldout/heldout_summary.json"
+    }
+  },
+  "warning_gates": {
+    "dev_multi_all_hit_at_5": {
+      "reference_numerator": 2,
+      "denominator": 6,
+      "source": "results/top_k/top_k_summary.json"
+    },
+    "heldout_multi_all_hit_at_5": {
+      "reference_numerator": 0,
+      "denominator": 3,
+      "source": "results/heldout/heldout_summary.json"
+    }
+  }
+}

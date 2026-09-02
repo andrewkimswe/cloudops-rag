@@ -58,6 +58,9 @@ jobs:
       - name: Validate evaluation datasets
         run: python scripts/validate_evaluation.py
 
+      - name: Check retrieval regression gate
+        run: python scripts/check_eval_regression.py
+
       - name: Lightweight secret scan
         run: |
           ! git grep -n -E \

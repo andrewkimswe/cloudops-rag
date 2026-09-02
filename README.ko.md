@@ -301,7 +301,7 @@ Failure handling:
 - Non-timeout dependency failure는 HTTP `503 external_dependency_unavailable`.
 - Fallback과 dependency failure는 별개의 flow.
 - Retry 가능한 OpenAI failure에는 application-level bounded retry/backoff를 적용하며 최대 3회까지 시도합니다. Timeout과 permanent 4xx failure는 빠르게 실패 처리합니다.
-- `main` 브랜치의 push/PR마다 GitHub Actions에서 테스트와 Docker build를 자동 검증합니다.
+- `main` 브랜치의 push/PR마다 GitHub Actions에서 tests, evaluation validation, retrieval regression gate, secret scan, Docker build smoke check를 자동 검증합니다.
 
 ## Quick Start
 
@@ -402,21 +402,37 @@ docker run --rm \
 
 상세 문서는 대부분 영어로 유지합니다.
 
-- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)
+Portfolio and architecture:
+
 - [Portfolio Summary](docs/PORTFOLIO_SUMMARY.md)
+- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)
 - [Technical Decisions](docs/DECISIONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Final Configuration](docs/FINAL_CONFIGURATION.md)
+- [Limitations](docs/LIMITATIONS.md)
+
+Operations and governance:
+
+- [Production Readiness](docs/PRODUCTION_READINESS.md)
+- [Rollout Policy](docs/ROLLOUT_POLICY.md)
+- [Corpus Governance](docs/CORPUS_GOVERNANCE.md)
+- [REST API](docs/API.md)
+- [Document Ingestion](docs/INGESTION.md)
+- [Docker](docs/DOCKER.md)
+- [Monitoring](docs/MONITORING.md)
+
+Evaluation and experiments:
+
 - [Evaluation Summary](docs/EVALUATION_SUMMARY.md)
 - [Held-out Evaluation](docs/HELDOUT_EVALUATION.md)
 - [Threshold Experiments](docs/THRESHOLD_EXPERIMENTS.md)
 - [Answer Evaluation](docs/ANSWER_EVALUATION.md)
 - [Answer Evaluation Human Review](docs/ANSWER_EVALUATION_HUMAN_REVIEW.md)
 - [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md)
-- [REST API](docs/API.md)
-- [Document Ingestion](docs/INGESTION.md)
-- [Docker](docs/DOCKER.md)
-- [Monitoring](docs/MONITORING.md)
+- [Experiment Interpretation](docs/EXPERIMENT_INTERPRETATION.md)
+- [Chunking Experiments](docs/CHUNKING_EXPERIMENTS.md)
+- [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md)
+- [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md)
 
 ## 라이선스
 

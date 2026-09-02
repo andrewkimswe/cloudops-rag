@@ -265,7 +265,7 @@ Failure handling:
 - Non-timeout dependency failure: `503 external_dependency_unavailable`.
 - Fallback is not an exception path; it is a controlled low-confidence retrieval response.
 - Retryable OpenAI failures use bounded application-level retry/backoff with at most 3 total attempts; timeouts and permanent 4xx failures fail fast.
-- GitHub Actions runs the test suite and Docker build on pushes and pull requests to `main`.
+- GitHub Actions runs tests, evaluation validation, the retrieval regression gate, secret scans, and Docker build smoke checks on pushes and pull requests to `main`.
 
 See [REST API](docs/API.md), [Document Ingestion](docs/INGESTION.md), and [Docker](docs/DOCKER.md).
 
@@ -441,26 +441,37 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 
 ## Detailed Documentation
 
-- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)
+Portfolio and architecture:
+
 - [Portfolio Summary](docs/PORTFOLIO_SUMMARY.md)
+- [Final Technical Audit](docs/FINAL_TECHNICAL_AUDIT.md)
 - [Technical Decisions](docs/DECISIONS.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Final Configuration](docs/FINAL_CONFIGURATION.md)
+- [Limitations](docs/LIMITATIONS.md)
+
+Operations and governance:
+
+- [Production Readiness](docs/PRODUCTION_READINESS.md)
+- [Rollout Policy](docs/ROLLOUT_POLICY.md)
+- [Corpus Governance](docs/CORPUS_GOVERNANCE.md)
+- [REST API](docs/API.md)
+- [Document Ingestion](docs/INGESTION.md)
+- [Docker](docs/DOCKER.md)
+- [Monitoring](docs/MONITORING.md)
+
+Evaluation and experiments:
+
 - [Evaluation Summary](docs/EVALUATION_SUMMARY.md)
 - [Held-out Evaluation](docs/HELDOUT_EVALUATION.md)
 - [Threshold Experiments](docs/THRESHOLD_EXPERIMENTS.md)
 - [Answer Evaluation](docs/ANSWER_EVALUATION.md)
 - [Answer Evaluation Human Review](docs/ANSWER_EVALUATION_HUMAN_REVIEW.md)
 - [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md)
-- [REST API](docs/API.md)
-- [Document Ingestion](docs/INGESTION.md)
-- [Docker](docs/DOCKER.md)
-- [Monitoring](docs/MONITORING.md)
 - [Experiment Interpretation](docs/EXPERIMENT_INTERPRETATION.md)
 - [Chunking Experiments](docs/CHUNKING_EXPERIMENTS.md)
 - [Embedding Experiments](docs/EMBEDDING_EXPERIMENTS.md)
 - [Top-k Experiments](docs/TOP_K_EXPERIMENTS.md)
-- [Limitations](docs/LIMITATIONS.md)
 
 ## License
 
