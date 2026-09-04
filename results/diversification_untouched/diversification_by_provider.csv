@@ -1,0 +1,5 @@
+variant,provider,count,hit_at_1_count,hit_at_1,hit_at_3_count,hit_at_3,hit_at_5_count,hit_at_5,mrr
+baseline,aws,3,2,0.6666666666666666,3,1.0,3,1.0,0.8333333333333334
+baseline,kubernetes,8,5,0.625,8,1.0,8,1.0,0.7916666666666666
+cap2,aws,3,2,0.6666666666666666,3,1.0,3,1.0,0.8333333333333334
+cap2,kubernetes,8,5,0.625,8,1.0,8,1.0,0.7916666666666666
