@@ -243,7 +243,7 @@ per-document max chunk = 2
 
 따라서 diversification은 candidate pool 안에 존재하는 relevant document를 duplicate occupancy로부터 복구할 수는 있지만, candidate generation 자체가 실패한 경우는 해결할 수 없습니다.
 
-이 실험은 Held-out 이후 수행된 post-hoc Dev experiment입니다. 새로운 untouched validation set에서 검증하지 않았기 때문에 Frozen Configuration에는 적용하지 않았습니다.
+이 실험은 Held-out 이후 수행된 post-hoc Dev experiment입니다. 이후 작은 untouched follow-up validation에서 document diversity 개선은 재현되었지만, Hit@k/MRR 개선은 baseline 대비 재현되지 않았습니다. 따라서 cap=2는 Frozen Configuration에 적용하지 않고 candidate heuristic으로만 유지했습니다.
 
 ## Service Engineering
 
@@ -381,13 +381,13 @@ docker run --rm \
 - LLM Judge는 human verification을 거쳤지만 sample이 작습니다.
 - Threshold fallback은 semantic misretrieval을 해결하지 못합니다.
 - Retry/backoff는 일부 transient OpenAI failure에만 제한적으로 적용되며, circuit breaker나 adaptive rate-limit control은 아직 없습니다.
-- cap=2 diversification은 새로운 untouched set에서 검증되지 않았습니다.
+- cap=2 diversification은 작은 untouched follow-up set에서 document diversity는 개선했지만, Hit@k/MRR 개선은 보이지 않았고 Frozen Configuration에는 포함되지 않았습니다.
 - Docker image size는 1.07GB로 크며, 현재 실측 기준 주요 원인은 application source가 아니라 runtime dependency footprint입니다.
 
 ## Future Work
 
 1. Larger corpus와 larger retrieval evaluation set 구성.
-2. Diversification 검증을 위한 새로운 untouched validation set 생성.
+2. Diversification candidate를 더 큰 untouched set에서 검증한 뒤 runtime 적용 여부 판단.
 3. Multi-document retrieval 개선.
 4. MMR, reranking, hybrid retrieval 비교.
 5. Query rewriting for multi-intent troubleshooting.

@@ -225,7 +225,7 @@ After the frozen held-out evaluation, a post-hoc Development-set experiment appl
 
 This supported the duplicate-occupancy hypothesis as a promising direction. In `eval_007`, Secrets chunks occupied the Top-5 baseline, and cap=2 allowed the ConfigMap document to enter the Top-5.
 
-The cap=2 retriever is not part of the frozen configuration. It was tested post-hoc on the Development set only and was not validated on a new untouched held-out set. It also cannot fix cases where the relevant document is absent from the raw candidate pool, such as `eval_027`.
+The cap=2 retriever is not part of the frozen configuration. A small untouched follow-up validation reproduced the document-diversity improvement, but did not improve Hit@k or MRR over the baseline. It also cannot fix cases where the relevant document is absent from the raw candidate pool, such as `eval_027`.
 
 See [Retrieval Diversification](docs/RETRIEVAL_DIVERSIFICATION.md).
 
@@ -422,13 +422,13 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - LLM-as-a-Judge results were human-checked, but still cover only 11 generated answers.
 - Threshold fallback does not prevent high-confidence semantic misretrieval.
 - Retry/backoff is bounded and limited to selected transient OpenAI failures; no circuit breaker or adaptive rate-limit control is implemented.
-- The cap=2 diversification candidate has not been validated on a new untouched held-out set.
+- The cap=2 diversification candidate improved document diversity on a small untouched follow-up set, but did not improve Hit@k/MRR and is not part of the frozen configuration.
 - Docker image size remains large: the current audit showed `1.07GB` in `docker images`, driven primarily by runtime dependency packaging rather than application source size.
 
 ## Future Work
 
 1. Expand the corpus and retrieval evaluation set.
-2. Create a new untouched validation set for retrieval diversification.
+2. Validate diversification candidates on larger untouched sets before any runtime adoption.
 3. Compare MMR, reranking, and hybrid retrieval.
 4. Add query rewriting for multi-intent troubleshooting questions.
 5. Use metadata-aware retrieval for provider/category/source filtering.

@@ -33,9 +33,9 @@ from cloudops_rag.retrieval.chroma_store import ChromaVectorStore
 from cloudops_rag.retrieval.diversification import document_diversity, select_with_per_document_cap
 from cloudops_rag.retrieval.schemas import RetrievedChunk
 
-DEV_EVALUATION_PATH = PROJECT_ROOT / "data" / "evaluation" / "evaluation_dev.csv"
+DEFAULT_EVALUATION_PATH = PROJECT_ROOT / "data" / "evaluation" / "evaluation_dev.csv"
 FULL_EVALUATION_PATH = PROJECT_ROOT / "data" / "evaluation" / "evaluation_full.csv"
-RESULT_DIR = PROJECT_ROOT / "results" / "diversification"
+DEFAULT_RESULT_DIR = PROJECT_ROOT / "results" / "diversification"
 RAW_RETRIEVAL_DEPTH = 20
 FINAL_TOP_K = FROZEN_RETRIEVAL_TOP_K
 PER_DOCUMENT_CAP = 2
@@ -46,6 +46,13 @@ HARD_CASE_IDS = {"eval_007", "eval_027", "eval_043", "eval_045", "eval_046"}
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
+
+
+def resolve_path(value: str | None, default: Path) -> Path:
+    if not value:
+        return default
+    path = Path(value)
+    return path if path.is_absolute() else PROJECT_ROOT / path
 
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None:
@@ -264,7 +271,10 @@ def main() -> int:
     settings = Settings.from_env()
     manifest = load_manifest(settings.manifest_path)
     provider_by_doc_id = {doc.doc_id: doc.provider for doc in manifest}
-    dev_rows = read_csv(DEV_EVALUATION_PATH)
+    evaluation_path = resolve_path(os.getenv("DIVERSIFICATION_EVALUATION_PATH"), DEFAULT_EVALUATION_PATH)
+    result_dir = resolve_path(os.getenv("DIVERSIFICATION_RESULT_DIR"), DEFAULT_RESULT_DIR)
+    dataset_name = os.getenv("DIVERSIFICATION_DATASET_NAME") or evaluation_path.stem
+    dev_rows = read_csv(evaluation_path)
     full_by_id = {row["id"]: row for row in read_csv(FULL_EVALUATION_PATH)}
 
     embedder = OpenAIEmbedder(model=FROZEN_EMBEDDING_MODEL, api_key=api_key)
@@ -347,11 +357,13 @@ def main() -> int:
             }
         )
 
-    RESULT_DIR.mkdir(parents=True, exist_ok=True)
+    result_dir.mkdir(parents=True, exist_ok=True)
     per_fields = list(per_question[0].keys())
-    write_csv(RESULT_DIR / "diversification_per_question.csv", per_question, per_fields)
-    write_csv(RESULT_DIR / "diversification_multi_document.csv", multi_rows, list(multi_rows[0].keys()))
-    write_csv(RESULT_DIR / "diversification_hard_cases.csv", hard_case_rows, list(hard_case_rows[0].keys()))
+    write_csv(result_dir / "diversification_per_question.csv", per_question, per_fields)
+    if multi_rows:
+        write_csv(result_dir / "diversification_multi_document.csv", multi_rows, list(multi_rows[0].keys()))
+    if hard_case_rows:
+        write_csv(result_dir / "diversification_hard_cases.csv", hard_case_rows, list(hard_case_rows[0].keys()))
 
     summary_rows: list[dict[str, Any]] = []
     summary_by_variant: dict[str, dict[str, Any]] = {}
@@ -361,7 +373,7 @@ def main() -> int:
         summary_by_variant[variant] = variant_summary
         flat = {"variant": variant, **{k: json.dumps(v) if isinstance(v, dict) else v for k, v in variant_summary.items()}}
         summary_rows.append(flat)
-    write_csv(RESULT_DIR / "diversification_summary.csv", summary_rows, list(summary_rows[0].keys()))
+    write_csv(result_dir / "diversification_summary.csv", summary_rows, list(summary_rows[0].keys()))
 
     diversity_rows = [
         {
@@ -373,7 +385,7 @@ def main() -> int:
         }
         for variant in ["baseline", "cap2"]
     ]
-    write_csv(RESULT_DIR / "diversification_document_diversity.csv", diversity_rows, list(diversity_rows[0].keys()))
+    write_csv(result_dir / "diversification_document_diversity.csv", diversity_rows, list(diversity_rows[0].keys()))
 
     context_rows = [
         {
@@ -383,12 +395,12 @@ def main() -> int:
         }
         for variant in ["baseline", "cap2"]
     ]
-    write_csv(RESULT_DIR / "diversification_context.csv", context_rows, list(context_rows[0].keys()))
+    write_csv(result_dir / "diversification_context.csv", context_rows, list(context_rows[0].keys()))
 
     provider_rows = aggregate_dimensions(per_question, "provider")
-    write_csv(RESULT_DIR / "diversification_by_provider.csv", provider_rows, list(provider_rows[0].keys()))
+    write_csv(result_dir / "diversification_by_provider.csv", provider_rows, list(provider_rows[0].keys()))
     question_type_rows = aggregate_dimensions(per_question, "question_type")
-    write_csv(RESULT_DIR / "diversification_by_question_type.csv", question_type_rows, list(question_type_rows[0].keys()))
+    write_csv(result_dir / "diversification_by_question_type.csv", question_type_rows, list(question_type_rows[0].keys()))
 
     improved = []
     regressed = []
@@ -406,7 +418,8 @@ def main() -> int:
 
     json_summary = {
         "experiment": "retrieval_diversification_per_document_cap_2",
-        "dataset": str(DEV_EVALUATION_PATH.relative_to(PROJECT_ROOT)),
+        "dataset": str(evaluation_path.relative_to(PROJECT_ROOT)),
+        "dataset_name": dataset_name,
         "held_out_used": False,
         "raw_retrieval_depth": RAW_RETRIEVAL_DEPTH,
         "final_top_k": FINAL_TOP_K,
@@ -433,8 +446,8 @@ def main() -> int:
         "judge_calls": 0,
         "decision": "candidate_only_not_applied_to_production",
     }
-    (RESULT_DIR / "diversification_summary.json").write_text(json.dumps(json_summary, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps({"dataset": "dev", "held_out_used": False, "raw_depth": RAW_RETRIEVAL_DEPTH, "top_k": FINAL_TOP_K, "cap": PER_DOCUMENT_CAP}, ensure_ascii=False))
+    (result_dir / "diversification_summary.json").write_text(json.dumps(json_summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(json.dumps({"dataset": dataset_name, "held_out_used": False, "raw_depth": RAW_RETRIEVAL_DEPTH, "top_k": FINAL_TOP_K, "cap": PER_DOCUMENT_CAP}, ensure_ascii=False))
     return 0
 
 
