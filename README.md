@@ -265,9 +265,10 @@ Failure handling:
 - Non-timeout dependency failure: `503 external_dependency_unavailable`.
 - Fallback is not an exception path; it is a controlled low-confidence retrieval response.
 - Retryable OpenAI failures use bounded application-level retry/backoff with at most 3 total attempts; timeouts and permanent 4xx failures fail fast.
-- GitHub Actions runs tests, evaluation validation, the retrieval regression gate, secret scans, and Docker build smoke checks on pushes and pull requests to `main`.
+- GitHub Actions runs tests, evaluation validation, the retrieval regression gate, secret scans, Docker build smoke checks, and mock API load smoke checks on pushes and pull requests to `main`.
+- A mock load smoke script exercises concurrent FastAPI `/query` success, fallback, and timeout paths without calling OpenAI or Chroma.
 
-See [REST API](docs/API.md), [Document Ingestion](docs/INGESTION.md), and [Docker](docs/DOCKER.md).
+See [REST API](docs/API.md), [Document Ingestion](docs/INGESTION.md), [Failure Mode Matrix](docs/FAILURE_MODE_MATRIX.md), [Runbook](docs/RUNBOOK.md), and [Docker](docs/DOCKER.md).
 
 ## Monitoring
 
@@ -317,6 +318,12 @@ Smoke check:
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/metrics
+```
+
+Run a mock concurrent API load smoke without OpenAI or Chroma calls:
+
+```bash
+python scripts/mock_load_smoke.py
 ```
 
 Query:
@@ -422,6 +429,7 @@ Out-of-scope fallback responses set `fallback=true`, return no sources, and skip
 - LLM-as-a-Judge results were human-checked, but still cover only 11 generated answers.
 - Threshold fallback does not prevent high-confidence semantic misretrieval.
 - Retry/backoff is bounded and limited to selected transient OpenAI failures; no circuit breaker or adaptive rate-limit control is implemented.
+- Mock load smoke covers small in-process API behavior only; it is not a large-scale load test.
 - The cap=2 diversification candidate improved document diversity on a small untouched follow-up set, but did not improve Hit@k/MRR and is not part of the frozen configuration.
 - Docker image size remains large: the current audit showed `1.07GB` in `docker images`, driven primarily by runtime dependency packaging rather than application source size.
 
@@ -453,6 +461,8 @@ Portfolio and architecture:
 Operations and governance:
 
 - [Production Readiness](docs/PRODUCTION_READINESS.md)
+- [Failure Mode Matrix](docs/FAILURE_MODE_MATRIX.md)
+- [Runbook](docs/RUNBOOK.md)
 - [Rollout Policy](docs/ROLLOUT_POLICY.md)
 - [Corpus Governance](docs/CORPUS_GOVERNANCE.md)
 - [REST API](docs/API.md)

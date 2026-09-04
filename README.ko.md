@@ -301,7 +301,7 @@ Failure handling:
 - Non-timeout dependency failure는 HTTP `503 external_dependency_unavailable`.
 - Fallback과 dependency failure는 별개의 flow.
 - Retry 가능한 OpenAI failure에는 application-level bounded retry/backoff를 적용하며 최대 3회까지 시도합니다. Timeout과 permanent 4xx failure는 빠르게 실패 처리합니다.
-- `main` 브랜치의 push/PR마다 GitHub Actions에서 tests, evaluation validation, retrieval regression gate, secret scan, Docker build smoke check를 자동 검증합니다.
+- `main` 브랜치의 push/PR마다 GitHub Actions에서 tests, evaluation validation, retrieval regression gate, secret scan, Docker build smoke check, mock API load smoke check를 자동 검증합니다.
 
 ## Quick Start
 
@@ -339,6 +339,12 @@ Smoke check:
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/metrics
+```
+
+OpenAI/Chroma 호출 없이 mock concurrent API load smoke 실행:
+
+```bash
+python scripts/mock_load_smoke.py
 ```
 
 Query:
@@ -381,6 +387,7 @@ docker run --rm \
 - LLM Judge는 human verification을 거쳤지만 sample이 작습니다.
 - Threshold fallback은 semantic misretrieval을 해결하지 못합니다.
 - Retry/backoff는 일부 transient OpenAI failure에만 제한적으로 적용되며, circuit breaker나 adaptive rate-limit control은 아직 없습니다.
+- Mock load smoke는 작은 in-process API behavior 확인이며 large-scale load test는 아닙니다.
 - cap=2 diversification은 작은 untouched follow-up set에서 document diversity는 개선했지만, Hit@k/MRR 개선은 보이지 않았고 Frozen Configuration에는 포함되지 않았습니다.
 - Docker image size는 1.07GB로 크며, 현재 실측 기준 주요 원인은 application source가 아니라 runtime dependency footprint입니다.
 
@@ -414,6 +421,8 @@ Portfolio and architecture:
 Operations and governance:
 
 - [Production Readiness](docs/PRODUCTION_READINESS.md)
+- [Failure Mode Matrix](docs/FAILURE_MODE_MATRIX.md)
+- [Runbook](docs/RUNBOOK.md)
 - [Rollout Policy](docs/ROLLOUT_POLICY.md)
 - [Corpus Governance](docs/CORPUS_GOVERNANCE.md)
 - [REST API](docs/API.md)

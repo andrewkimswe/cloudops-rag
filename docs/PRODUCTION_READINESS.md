@@ -15,7 +15,8 @@ The project is a public portfolio service, not a production deployment. The inte
 - Docker runtime with Python 3.12, non-root user, health check, and bind-mounted persistence.
 - Prometheus-compatible `/metrics` endpoint.
 - Bounded retry/backoff for selected transient OpenAI embedding and generation failures.
-- GitHub Actions CI for tests, compile/import checks, evaluation validation, retrieval regression gate, secret scan, and Docker build smoke test.
+- GitHub Actions CI for tests, compile/import checks, evaluation validation, retrieval regression gate, secret scan, Docker build smoke test, and mock API load smoke test.
+- Mock load smoke coverage for concurrent in-process `/query` success, fallback, and timeout behavior without OpenAI or Chroma calls.
 - MIT license and bilingual README for public review.
 
 ## Not Production-grade Yet
@@ -25,7 +26,7 @@ The project is a public portfolio service, not a production deployment. The inte
 - No TLS termination or deployment hardening.
 - No async ingestion worker or durable retry queue.
 - No circuit breaker or adaptive rate-limit handling.
-- No load testing or capacity testing.
+- No large-scale load testing or capacity testing against realistic production traffic.
 - No production alerting rules, dashboards, or on-call playbook.
 - No Kubernetes deployment manifests.
 - No automated answer-quality regression gate.
@@ -90,5 +91,6 @@ Any future retriever, model, chunking, threshold, or prompt change should pass:
 - retrieval regression gate
 - secret and personal-path scans
 - Docker build and health smoke test
+- mock API load smoke test
 
-See [Rollout Policy](ROLLOUT_POLICY.md) for the recommended rollout sequence.
+See [Rollout Policy](ROLLOUT_POLICY.md) for the recommended rollout sequence, [Failure Mode Matrix](FAILURE_MODE_MATRIX.md) for known failure modes, and [Runbook](RUNBOOK.md) for operator triage.

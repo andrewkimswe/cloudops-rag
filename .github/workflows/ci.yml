@@ -39,6 +39,9 @@ jobs:
       - name: Run tests
         run: python -m pytest
 
+      - name: Run mock API load smoke
+        run: python scripts/mock_load_smoke.py --requests 30 --concurrency 10 --latency-ms 2
+
       - name: Compile and import check
         run: |
           python -m compileall -q src scripts tests
