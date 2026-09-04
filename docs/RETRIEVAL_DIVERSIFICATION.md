@@ -255,3 +255,56 @@ cap=2 should be retained as a promising post-hoc candidate, not a production cha
 The hypothesis is partially supported: document diversity improved substantially, duplicate occupancy decreased, and Multi-document All-Hit@5 improved from 2/6 to 4/6 on the Dev set without observed single-document regression. However, cap=2 did not solve cases where the missing document was not present in raw depth 20 or was still displaced after capping.
 
 Recommendation: retain cap=2 as a promising post-hoc retrieval diversification candidate; do not replace the frozen configuration. If a future scope opens retrieval improvements, compare it against alternatives such as MMR, reranking, hybrid retrieval, or document-aware selection.
+
+## 17. Untouched Validation Follow-up
+
+After the Dev-side controlled experiment, a small untouched validation set was created to check whether the cap=2 signal repeated on questions that were not part of the original Dev or Held-out Test split.
+
+Dataset: `data/evaluation/diversification_validation.csv`
+
+This set contains 12 new questions:
+
+| Type | Count |
+|---|---:|
+| In-scope total | 11 |
+| Single-document | 8 |
+| Multi-document | 3 |
+| Out-of-scope | 1 |
+
+Controlled variables stayed unchanged: frozen chunking, OpenAI `text-embedding-3-small`, Chroma, raw retrieval depth 20, final Top-5, and no answer generation or judge calls. This validation did not use the original Held-out Test set and did not promote cap=2 into the frozen runtime configuration.
+
+### Untouched Results
+
+| Metric | Baseline | cap=2 |
+|---|---:|---:|
+| Hit@1 | 7/11 = 0.6364 | 7/11 = 0.6364 |
+| Hit@3 | 11/11 = 1.0000 | 11/11 = 1.0000 |
+| Hit@5 | 11/11 = 1.0000 | 11/11 = 1.0000 |
+| MRR | 0.8030 | 0.8030 |
+| Multi Any-Hit@5 | 3/3 = 1.0000 | 3/3 = 1.0000 |
+| Multi All-Hit@5 | 1/3 = 0.3333 | 1/3 = 0.3333 |
+
+Document diversity improved:
+
+| Metric | Baseline | cap=2 |
+|---|---:|---:|
+| Average unique doc count | 2.0000 | 3.3333 |
+| Average duplicate chunk count | 3.0000 | 1.5000 |
+| Average duplicate ratio | 0.6000 | 0.3167 |
+| Max same-document occupancy | 5 | 2 |
+
+There were no Hit@5 or MRR regressions on the 11 in-scope validation questions, but there were also no Hit@5 or MRR improvements. The strongest repeated signal is document diversity, not retrieval quality improvement.
+
+### Untouched Multi-document Notes
+
+| ID | Expected docs | Outcome |
+|---|---|---|
+| divval_005 | `k8s_configmaps`, `k8s_secrets` | cap=2 reduced repeated Secret chunks, but `k8s_configmaps` was not present in raw depth 20. |
+| divval_010 | `aws_alb_troubleshooting`, `aws_ec2_autoscaling_health_checks` | both baseline and cap=2 retrieved all expected docs in Top-5. |
+| divval_011 | `aws_rds_troubleshooting`, `aws_vpc_reachability_analyzer` | cap=2 reduced repeated RDS chunks, but VPC Reachability Analyzer remained too low at raw rank 18 to enter final Top-5. |
+
+This follow-up keeps the original interpretation intact: cap=2 is useful evidence for the duplicate-chunk hypothesis, but it is not enough by itself to fix multi-document completeness. Some failures require better candidate generation, query decomposition, reranking, MMR, hybrid search, or metadata-aware retrieval.
+
+## 18. Updated Decision
+
+cap=2 remains a candidate retrieval diversification heuristic only. The untouched validation set reproduced the document-diversity improvement, but it did not reproduce a retrieval metric lift over baseline. The frozen configuration remains unchanged.

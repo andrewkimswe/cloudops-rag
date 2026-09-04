@@ -1,0 +1,9 @@
+variant,question_type,count,hit_at_1_count,hit_at_1,hit_at_3_count,hit_at_3,hit_at_5_count,hit_at_5,mrr
+baseline,contextual,2,2,1.0,2,1.0,2,1.0,1.0
+baseline,multi-document,2,1,0.5,2,1.0,2,1.0,0.75
+baseline,similar-concept-discrimination,3,3,1.0,3,1.0,3,1.0,1.0
+baseline,single-troubleshooting,4,1,0.25,4,1.0,4,1.0,0.5833333333333334
+cap2,contextual,2,2,1.0,2,1.0,2,1.0,1.0
+cap2,multi-document,2,1,0.5,2,1.0,2,1.0,0.75
+cap2,similar-concept-discrimination,3,3,1.0,3,1.0,3,1.0,1.0
+cap2,single-troubleshooting,4,1,0.25,4,1.0,4,1.0,0.5833333333333334
